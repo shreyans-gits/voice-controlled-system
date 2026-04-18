@@ -1,9 +1,11 @@
 import speech_recognition as sr
 import config
-from gtts import gTTS
 import pygame
 import os
 import tempfile
+import asyncio
+import edge_tts
+
 
 class Voice:
     def __init__(self):
@@ -13,17 +15,31 @@ class Voice:
 
     def speak(self, text):
         print(f"N.O.V.A.: {text}")
-        temp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
-        temp.close()
-        tts = gTTS(text=text, lang='en')
-        tts.save(temp.name)
+
+        async def generate():
+            temp = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+            temp.close()
+
+            communicate = edge_tts.Communicate(
+                text=text,
+                voice=config.TTS_VOICE
+            )
+
+            await communicate.save(temp.name)
+            return temp.name
+
+        # Run async internally (you stay sync)
+        file_path = asyncio.run(generate())
+
         pygame.mixer.init()
-        pygame.mixer.music.load(temp.name)
+        pygame.mixer.music.load(file_path)
         pygame.mixer.music.play()
+
         while pygame.mixer.music.get_busy():
             continue
+
         pygame.mixer.quit()
-        os.remove(temp.name)
+        os.remove(file_path)
 
     def listen(self):
         with sr.Microphone() as source:
@@ -33,7 +49,7 @@ class Voice:
 
         try:
             print("Recognizing...")
-            query = self.recognizer.recognize_google(audio, language='en-in')
+            query = self.recognizer.recognize_google(audio, language=config.TTS_LANGUAGE)
             print(f"You: {query}")
             return query.lower()
         except sr.UnknownValueError:
