@@ -3,6 +3,7 @@ from core.voice import Voice
 import config
 from modules.weather import WeatherModule
 from modules.system import SystemModule
+from modules.search import SearchModule
 
 import datetime
 import time
@@ -22,6 +23,7 @@ def main():
     voice = Voice()
     weather = WeatherModule()
     system = SystemModule()
+    search = SearchModule()
 
     voice.speak(greet())
 
@@ -40,12 +42,25 @@ def main():
 
         elif "battery" in query:
             voice.speak(system.get_battery())
-        
         elif "cpu" in query:
             voice.speak(system.get_cpu())
-        
         elif "ram usage" in query or "memory" in query:
             voice.speak(system.get_ram())
+
+        elif "search" in query or "find" in query:
+            query = query.replace("search", ' ')
+            query = query.replace("find", ' ')
+            voice.speak(f"Searching {query}")
+            search.search(query)
+        elif "watch" in query:
+            query = query.replace("watch", ' ')
+            voice.speak(f"Searching {query}")
+            search.watch(query)
+        elif "wiki" in query or "wikipedia" in query:
+            voice.speak("Searching Wikipedia...")
+            query = query.replace("wikipedia", "")
+            query = query.replace("wiki", "")
+            voice.speak(search.getWiki(query))
 
         else:
             response = brain.ask(query)
