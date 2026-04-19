@@ -1,6 +1,8 @@
 from core.brain import Brain
 from core.voice import Voice
 import config
+from modules.weather import WeatherModule
+
 import datetime
 import time
 
@@ -17,6 +19,7 @@ def greet():
 def main():
     brain = Brain()
     voice = Voice()
+    weather = WeatherModule()
 
     voice.speak(greet())
 
@@ -30,8 +33,12 @@ def main():
             voice.speak("Shutting down. Goodbye.")
             break
 
-        response = brain.ask(query)
-        voice.speak(response)
+        elif "weather" in query:
+            voice.speak(weather.getWeather())
+
+        else:
+            response = brain.ask(query)
+            voice.speak(response)
 
 if __name__ == "__main__":
     main()
