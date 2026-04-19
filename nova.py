@@ -5,10 +5,12 @@ from modules.weather import WeatherModule
 from modules.system import SystemModule
 from modules.search import SearchModule
 from modules.news import NewsModule
+from modules.reminder import ReminderModule
 
 import datetime
 import time
-
+import threading
+from plyer import notification
 
 def greet():
     hour = datetime.datetime.now().hour
@@ -26,6 +28,23 @@ def main():
     system = SystemModule()
     search = SearchModule()
     news = NewsModule()
+    reminder = ReminderModule()
+
+    def reminder_checker():
+        while True:
+            alert = reminder.check_reminders()
+            if alert:
+                voice.speak(f"Reminder: {alert}")
+                notification.notify(
+                    title = "REMINDER!",
+                    message = alert,
+                    timeout = 5
+                )
+
+            time.sleep(30)
+
+    threading.Thread(target=reminder_checker, daemon=True).start()
+
 
     voice.speak(greet())
 
@@ -68,6 +87,13 @@ def main():
             titles = news.get_news()
             for i in titles:
                 voice.speak(i)
+
+        elif "reminder" in query:
+            voice.speak("What should I remind you about?")
+            message = voice.listen()
+            voice.speak("In how many minutes?")
+            time_str = voice.listen()
+            voice.speak(reminder.set_reminder(time_str, message))
 
         else:
             response = brain.ask(query)
