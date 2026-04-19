@@ -7,6 +7,7 @@ API_KEY = os.getenv("API_KEY")
 TTS_Voice = os.getenv("TTS_Voice")
 TTS_Lang = os.getenv("TTS_Lang")
 City = os.getenv("CITY")
+news = os.getenv("NEWS_API_KEY")
 
 GROQ_API_KEY = API_KEY
 ASSISTANT_NAME = "NOVA"
@@ -21,3 +22,6 @@ AI_MODEL = "llama-3.3-70b-versatile"   # free and fast on Groq
 
 # Weather settings
 CITY = City
+
+# NEWS
+NEWS_KEY = news

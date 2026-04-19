@@ -4,6 +4,7 @@ import config
 from modules.weather import WeatherModule
 from modules.system import SystemModule
 from modules.search import SearchModule
+from modules.news import NewsModule
 
 import datetime
 import time
@@ -24,6 +25,7 @@ def main():
     weather = WeatherModule()
     system = SystemModule()
     search = SearchModule()
+    news = NewsModule()
 
     voice.speak(greet())
 
@@ -61,6 +63,11 @@ def main():
             query = query.replace("wikipedia", "")
             query = query.replace("wiki", "")
             voice.speak(search.getWiki(query))
+
+        elif "news" in query:
+            titles = news.get_news()
+            for i in titles:
+                voice.speak(i)
 
         else:
             response = brain.ask(query)
