@@ -2,6 +2,7 @@ from core.brain import Brain
 from core.voice import Voice
 import config
 from modules.weather import WeatherModule
+from modules.system import SystemModule
 
 import datetime
 import time
@@ -20,6 +21,7 @@ def main():
     brain = Brain()
     voice = Voice()
     weather = WeatherModule()
+    system = SystemModule()
 
     voice.speak(greet())
 
@@ -35,6 +37,15 @@ def main():
 
         elif "weather" in query:
             voice.speak(weather.getWeather())
+
+        elif "battery" in query:
+            voice.speak(system.get_battery())
+        
+        elif "cpu" in query:
+            voice.speak(system.get_cpu())
+        
+        elif "ram usage" in query or "memory" in query:
+            voice.speak(system.get_ram())
 
         else:
             response = brain.ask(query)
