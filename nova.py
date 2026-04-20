@@ -6,6 +6,7 @@ from modules.system import SystemModule
 from modules.search import SearchModule
 from modules.news import NewsModule
 from modules.reminder import ReminderModule
+from modules.whatsapp import WhatsappModule
 
 import datetime
 import time
@@ -29,6 +30,7 @@ def main():
     search = SearchModule()
     news = NewsModule()
     reminder = ReminderModule()
+    wp = WhatsappModule()
 
     def reminder_checker():
         while True:
@@ -94,6 +96,17 @@ def main():
             voice.speak("In how many minutes?")
             time_str = voice.listen()
             voice.speak(reminder.set_reminder(time_str, message))
+
+        elif "message" in query:
+            voice.speak("What is your message?")
+            message = voice.listen()
+            message = message + "\n\n_- This message was sent to you by NOVA_"
+            voice.speak("To whom do you want to send the message?")
+            name = voice.listen().lower()
+            number = config.CONTACTS.get(name, "+916363466319")
+            if name not in config.CONTACTS:
+                voice.speak(f"I couldn't find {name} in your contacts, so I'll send it to your default number.")
+            voice.speak(wp.send_message(number,message))
 
         else:
             response = brain.ask(query)

@@ -1,4 +1,8 @@
 .env
-__pyache__/
+__pycache__/
+*.pyc
+core\__pycache__/
+modules\__pycache__
 Jarvis.py
 test.py
+PyWhatKit_DB.txt
