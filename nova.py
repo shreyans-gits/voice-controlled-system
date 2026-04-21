@@ -8,6 +8,7 @@ from modules.news import NewsModule
 from modules.reminder import ReminderModule
 from modules.whatsapp import WhatsappModule
 from modules.spotify import SpotifyModule
+from modules.study import StudyModule
 
 import datetime
 import time
@@ -33,6 +34,7 @@ def main():
     reminder = ReminderModule()
     wp = WhatsappModule()
     spotify = SpotifyModule()
+    study = StudyModule()
 
     def reminder_checker():
         while True:
@@ -118,12 +120,28 @@ def main():
                 voice.speak(result)
             else:
                 voice.speak("What song would you like me to play?")
-
         elif "pause" in query or "stop the music" in query:
             voice.speak(spotify.pause())
-
         elif "next" in query or "skip" in query:
             voice.speak(spotify.next_track())
+
+        elif "study" in query or "pomodoro" in query:
+            try:
+                mins = int(query.split("for")[1].split()[0])
+                voice.speak(study.pomodoro(mins))
+            except:
+                voice.speak(study.pomodoro(25))
+        elif "summarize" in query or "summarise" in query:
+            summary_result = study.summarize_pdf() 
+            voice.speak(summary_result)
+        elif "flashcard" in query or "flash card" in query:
+            voice.speak("Give name of the topic")
+            topic = voice.listen().lower()
+            if topic:
+                voice.speak(f"Generating flashcards for {topic}. Just a moment.")
+                voice.speak(study.flashcard(topic))
+            else:
+                voice.speak("I didn't catch the topic. Please try again.")
 
         else:
             response = brain.ask(query)
