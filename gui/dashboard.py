@@ -6,7 +6,7 @@ ctk.set_default_color_theme("blue")
 ctk.FontManager.load_font("cufel.otf")
 
 class Dashboard(ctk.CTk):
-    def __init__(self):
+    def __init__(self, message_queue):
         super().__init__()
 
         self.isListening = False
@@ -64,11 +64,28 @@ class Dashboard(ctk.CTk):
         self.send_button.pack(side="left")
         self.input_field.bind("<Shift-Return>", self.handle_newline)
         self.input_field.bind("<Return>", self.handle_enter)
+
+        self.textbox.tag_config("nova", foreground="#00d4ff")
+        self.textbox.tag_config("you", foreground="#ffffff")
+        self.message_queue = message_queue
     
-    def add_message(self,sender,text):
+    def add_message(self, sender, text):
         self.textbox.configure(state="normal")
-        self.textbox.insert("end",sender+": "+text+"\n")
+        if sender == "NOVA":
+            self.textbox.insert("end", sender + ": " + text + "\n", "nova")
+        else:
+            self.textbox.insert("end", sender + ": " + text + "\n", "you")
         self.textbox.configure(state="disabled")
+        self.textbox.see("end")
+
+    def check_queue(self, message_queue):
+        while not message_queue.empty():
+            msg = message_queue.get()
+            if msg["type"] == "message":
+                self.add_message(msg["sender"], msg["text"])
+            elif msg["type"] == "status":
+                self.set_status(msg["value"])
+        self.after(100, lambda: self.check_queue(message_queue))
 
     def set_status(self,status):
         if status == "LISTENING":
@@ -96,7 +113,7 @@ class Dashboard(ctk.CTk):
         center_y = 30
 
         for i in range(number_of_bars):
-            bar_height = random.randint(10, 100) 
+            bar_height = random.randint(10, 60) 
             x_pos = (i * spacing) + (spacing / 2)
             
             y1 = center_y - (bar_height / 2)
@@ -116,6 +133,7 @@ class Dashboard(ctk.CTk):
             self.add_message("You", text)
             self.input_field.delete("1.0", "end")
             self.input_field.configure(height=35)
+            self.message_queue.put({"type": "text_input", "text": text})
             self.set_status("THINKING")
 
     def handle_enter(self, event):
