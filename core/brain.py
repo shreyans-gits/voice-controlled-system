@@ -1,5 +1,3 @@
-# core/brain.py
-
 from groq import Groq
 import config
 
