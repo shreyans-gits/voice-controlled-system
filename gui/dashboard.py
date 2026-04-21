@@ -24,7 +24,6 @@ class Dashboard(ctk.CTk):
         self.textbox.configure(state="disabled")
 
         self.statusLabel = ctk.CTkLabel(self, text="● IDLE", font=("Consolas", 13), text_color=("#888888"))
-        self.statusLabel.pack(pady=1)
 
         self.my_canvas = ctk.CTkCanvas(self, width=440, height=60, bg="#0a0a0f", highlightthickness=0)
         self.my_canvas.pack(pady=5)
@@ -37,8 +36,34 @@ class Dashboard(ctk.CTk):
             x_pos = (i * spacing) + (spacing / 2)
             bar = self.my_canvas.create_rectangle(x_pos - (bar_width / 2), 20, x_pos + (bar_width / 2), 30, fill="#00d4ff", outline="")
             self.bars.append(bar)
+        self.statusLabel.pack(pady=1)
+        # self.set_status("LISTENING")
 
-        self.set_status("LISTENING")
+        self.input_frame = ctk.CTkFrame(self, fg_color="#0a0a0f")
+        self.input_frame.pack(side="bottom", fill="x", pady=20, padx=30)
+        self.input_field = ctk.CTkTextbox(
+            self.input_frame, 
+            width=340, 
+            height=35,
+            fg_color="#0f0f1a",
+            border_color="#00d4ff",
+            border_width=2,
+            activate_scrollbars=False
+        )
+        self.input_field.pack(side="left", padx=(0, 10), pady=10)
+
+        self.send_button = ctk.CTkButton(
+            self.input_frame,
+            text="➤",
+            width=50,
+            command=self.handle_input,
+            fg_color="#00d4ff",
+            hover_color="#0c7b92",
+            text_color="#0a0a0f"
+        )
+        self.send_button.pack(side="left")
+        self.input_field.bind("<Shift-Return>", self.handle_newline)
+        self.input_field.bind("<Return>", self.handle_enter)
     
     def add_message(self,sender,text):
         self.textbox.configure(state="normal")
@@ -84,6 +109,28 @@ class Dashboard(ctk.CTk):
                 outline=""
             )
         self.after(100, self.animate_waveform)
+
+    def handle_input(self):
+        text = self.input_field.get("1.0", "end-1c").strip()
+        if text:
+            self.add_message("You", text)
+            self.input_field.delete("1.0", "end")
+            self.input_field.configure(height=35)
+            self.set_status("THINKING")
+
+    def handle_enter(self, event):
+        self.handle_input()
+        return "break" 
+
+    def handle_newline(self, event):
+        self.after(10, self.auto_expand) 
+
+    def auto_expand(self, event=None):
+        content = self.input_field.get("1.0", "end-1c")
+        line_count = content.count('\n') + 1
+        display_lines = min(line_count, 5)
+        new_height = 35 + (display_lines - 1) * 20
+        self.input_field.configure(height=new_height)
 
 if __name__ == "__main__":
     app = Dashboard()
