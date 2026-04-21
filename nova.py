@@ -7,6 +7,7 @@ from modules.search import SearchModule
 from modules.news import NewsModule
 from modules.reminder import ReminderModule
 from modules.whatsapp import WhatsappModule
+from modules.spotify import SpotifyModule
 
 import datetime
 import time
@@ -31,6 +32,7 @@ def main():
     news = NewsModule()
     reminder = ReminderModule()
     wp = WhatsappModule()
+    spotify = SpotifyModule()
 
     def reminder_checker():
         while True:
@@ -107,6 +109,21 @@ def main():
             if name not in config.CONTACTS:
                 voice.speak(f"I couldn't find {name} in your contacts, so I'll send it to your default number.")
             voice.speak(wp.send_message(number,message))
+
+        elif "play" in query:
+            song_name = query.replace("play", "").strip()
+            if song_name:
+                voice.speak(f"Searching for {song_name} on Spotify")
+                result = spotify.play(song_name)
+                voice.speak(result)
+            else:
+                voice.speak("What song would you like me to play?")
+
+        elif "pause" in query or "stop the music" in query:
+            voice.speak(spotify.pause())
+
+        elif "next" in query or "skip" in query:
+            voice.speak(spotify.next_track())
 
         else:
             response = brain.ask(query)

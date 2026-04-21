@@ -6,3 +6,4 @@ modules\__pycache__
 Jarvis.py
 test.py
 PyWhatKit_DB.txt
+*.cache

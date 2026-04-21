@@ -10,7 +10,11 @@ TTS_Lang = os.getenv("TTS_Lang")
 City = os.getenv("CITY")
 news = os.getenv("NEWS_API_KEY")
 contacts = os.getenv("contacts")
+spotify_client_ID = os.getenv("spotify_client_id")
+spotify_client_secret = os.getenv("spotify_client_secret")
+spotify_uri = os.getenv("spotify_uri")
 
+# BRAIN
 GROQ_API_KEY = API_KEY
 ASSISTANT_NAME = "NOVA"
 USER_NAME = "Shreyans"
@@ -33,3 +37,8 @@ if contacts:
     CONTACTS = ast.literal_eval(contacts)
 else:
     CONTACTS = {}
+
+# SPOTIFY
+SPOTIFY_ID = spotify_client_ID
+SPOTIFY_SECRET = spotify_client_secret
+SPOTIFY_URI = spotify_uri
