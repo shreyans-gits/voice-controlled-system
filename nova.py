@@ -63,89 +63,86 @@ def main():
         if "quit" in query or "exit" in query or "goodbye" in query:
             voice.speak("Shutting down. Goodbye.")
             break
-
-        elif "weather" in query:
-            voice.speak(weather.getWeather())
-
-        elif "battery" in query:
-            voice.speak(system.get_battery())
-        elif "cpu" in query:
-            voice.speak(system.get_cpu())
-        elif "ram usage" in query or "memory" in query:
-            voice.speak(system.get_ram())
-
-        elif "search" in query or "find" in query:
-            query = query.replace("search", ' ')
-            query = query.replace("find", ' ')
-            voice.speak(f"Searching {query}")
-            search.search(query)
-        elif "watch" in query:
-            query = query.replace("watch", ' ')
-            voice.speak(f"Searching {query}")
-            search.watch(query)
-        elif "wiki" in query or "wikipedia" in query:
-            voice.speak("Searching Wikipedia...")
-            query = query.replace("wikipedia", "")
-            query = query.replace("wiki", "")
-            voice.speak(search.getWiki(query))
-
-        elif "news" in query:
-            titles = news.get_news()
-            for i in titles:
-                voice.speak(i)
-
-        elif "reminder" in query:
-            voice.speak("What should I remind you about?")
-            message = voice.listen()
-            voice.speak("In how many minutes?")
-            time_str = voice.listen()
-            voice.speak(reminder.set_reminder(time_str, message))
-
-        elif "message" in query:
-            voice.speak("What is your message?")
-            message = voice.listen()
-            message = message + "\n\n_- This message was sent to you by NOVA_"
-            voice.speak("To whom do you want to send the message?")
-            name = voice.listen().lower()
-            number = config.CONTACTS.get(name, "+916363466319")
-            if name not in config.CONTACTS:
-                voice.speak(f"I couldn't find {name} in your contacts, so I'll send it to your default number.")
-            voice.speak(wp.send_message(number,message))
-
-        elif "play" in query:
-            song_name = query.replace("play", "").strip()
-            if song_name:
-                voice.speak(f"Searching for {song_name} on Spotify")
-                result = spotify.play(song_name)
-                voice.speak(result)
-            else:
-                voice.speak("What song would you like me to play?")
-        elif "pause" in query or "stop the music" in query:
-            voice.speak(spotify.pause())
-        elif "next" in query or "skip" in query:
-            voice.speak(spotify.next_track())
-
-        elif "study" in query or "pomodoro" in query:
-            try:
-                mins = int(query.split("for")[1].split()[0])
-                voice.speak(study.pomodoro(mins))
-            except:
-                voice.speak(study.pomodoro(25))
-        elif "summarize" in query or "summarise" in query:
-            summary_result = study.summarize_pdf() 
-            voice.speak(summary_result)
-        elif "flashcard" in query or "flash card" in query:
-            voice.speak("Give name of the topic")
-            topic = voice.listen().lower()
-            if topic:
-                voice.speak(f"Generating flashcards for {topic}. Just a moment.")
-                voice.speak(study.flashcard(topic))
-            else:
-                voice.speak("I didn't catch the topic. Please try again.")
-
         else:
-            response = brain.ask(query)
-            voice.speak(response)
+            intent = brain.get_intent(query)
+
+            if intent == "WEATHER":
+                voice.speak(weather.getWeather())
+
+            elif intent == "BATTERY":
+                voice.speak(system.get_battery())
+            elif intent == "CPU":
+                voice.speak(system.get_cpu())
+            elif intent == "RAM":
+                voice.speak(system.get_ram())
+
+            elif intent == "SEARCH":
+                subject = brain.extract_subject(query, intent)
+                voice.speak(f"Searching {subject}")
+                search.search(subject)
+            elif intent == "WATCH":
+                subject = brain.extract_subject(query, intent)
+                voice.speak(f"Searching {subject} on YouTube")
+                search.watch(subject)
+            elif intent == "WIKIPEDIA":
+                subject = brain.extract_subject(query, intent)
+                voice.speak("Searching Wikipedia...")
+                voice.speak(search.getWiki(subject))
+
+            elif intent == "NEWS":
+                titles = news.get_news()
+                for i in titles:
+                    voice.speak(i)
+
+            elif intent == "REMINDER":
+                voice.speak("What should I remind you about?")
+                message = voice.listen()
+                voice.speak("In how many minutes?")
+                time_str = voice.listen()
+                voice.speak(reminder.set_reminder(time_str, message))
+
+            elif intent == "WHATSAPP":
+                voice.speak("What is your message?")
+                message = voice.listen()
+                message = message + "\n\n_- This message was sent to you by NOVA_"
+                voice.speak("To whom do you want to send the message?")
+                name = voice.listen().lower()
+                number = config.CONTACTS.get(name, "+916363466319")
+                if name not in config.CONTACTS:
+                    voice.speak(f"I couldn't find {name} in your contacts, so I'll send it to your default number.")
+                voice.speak(wp.send_message(number,message))
+
+            elif intent == "SPOTIFY_PLAY":
+                subject = brain.extract_subject(query, intent)
+                voice.speak(f"Searching for {subject} on Spotify")
+                result = spotify.play(subject)
+                voice.speak(result)
+            elif intent == "SPOTIFY_PAUSE":
+                voice.speak(spotify.pause())
+            elif intent == "SPOTIFY_SKIP":
+                voice.speak(spotify.next_track())
+
+            elif intent == "POMODORO":
+                try:
+                    mins = int(query.split("for")[1].split()[0])
+                    voice.speak(study.pomodoro(mins))
+                except:
+                    voice.speak(study.pomodoro(25))
+            elif intent == "SUMMARIZE":
+                summary_result = study.summarize_pdf() 
+                voice.speak(summary_result)
+            elif intent == "FLASHCARD":
+                voice.speak("Give name of the topic")
+                topic = voice.listen().lower()
+                if topic:
+                    voice.speak(f"Generating flashcards for {topic}. Just a moment.")
+                    voice.speak(study.flashcard(topic))
+                else:
+                    voice.speak("I didn't catch the topic. Please try again.")
+
+            else:
+                response = brain.ask(query)
+                voice.speak(response)
 
 if __name__ == "__main__":
     main()

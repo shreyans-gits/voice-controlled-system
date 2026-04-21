@@ -7,13 +7,79 @@ class Brain:
         self.model = config.AI_MODEL
         self.conversation_history = []
 
-        # This is Jarvis's personality
+        # This is NOVA's personality
         self.system_prompt = f"""
         You are {config.ASSISTANT_NAME}, a smart, helpful, and witty AI desktop assistant.
         You are talking to {config.USER_NAME}.
         Keep responses concise and conversational — you are being spoken aloud.
         No bullet points or markdown. Just natural sentences.
         """
+
+    def get_intent(self,query):
+        try:
+            intent_prompt = f"""
+            You are an intent classifier. Classify the following query into exactly one of these intents:
+            WEATHER, BATTERY, CPU, RAM, SEARCH, WATCH, WIKIPEDIA, NEWS, REMINDER, 
+            WHATSAPP, SPOTIFY_PLAY, SPOTIFY_PAUSE, SPOTIFY_SKIP, POMODORO, 
+            SUMMARIZE, FLASHCARD, CONVERSATION
+
+            Rules:
+            - Reply with just the intent word, nothing else
+            - No punctuation, no explanation
+            - If unsure, return CONVERSATION
+
+            Query: {query}
+            """
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": intent_prompt}
+                ],
+                temperature=0, 
+                max_tokens=10 
+            )
+            intent = response.choices[0].message.content.strip().upper()
+            print(f"--- Intent Detected: {intent} ---")
+            return intent
+        
+        except Exception as e:
+            print(f"Intent Error: {e}")
+            return "CONVERSATION"
+        
+    def extract_subject(self, query, intent):
+        try:
+            extract_prompt = f"""
+            Extract only the search subject from this query. 
+            Return just the subject, nothing else, no punctuation.
+
+            Examples:
+            'I want to watch some game videos' -> 'game videos'
+            'search images of India' -> 'images of India'
+            'learn about Indian history' -> 'Indian history'
+            'put on some Drake' -> 'Drake'
+
+            Query: {query}
+            Intent: {intent}
+            """
+
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": extract_prompt}
+                ],
+                temperature=0,
+                max_tokens=20
+            )
+
+            subject = response.choices[0].message.content.strip()
+            
+            print(f"--- Subject Extracted: {subject} ---")
+            
+            return subject
+
+        except Exception as e:
+            print(f"Extraction Error: {e}")
+            return query
 
     def ask(self, user_input):
         # Add user message to history
@@ -34,7 +100,7 @@ class Brain:
         # Extract reply
         reply = response.choices[0].message.content
 
-        # Add reply to history so Jarvis remembers context
+        # Add reply to history so NOVA remembers context
         self.conversation_history.append({
             "role": "assistant",
             "content": reply
