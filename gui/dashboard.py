@@ -69,6 +69,12 @@ class Dashboard(ctk.CTk):
         self.textbox.tag_config("you", foreground="#ffffff")
         self.message_queue = message_queue
         self.input_queue = input_queue
+
+        self.my_label.bind("<Double-Button-1>", self.toggle_mini_mode)
+        self.statusLabel.bind("<Double-Button-1>", self.toggle_mini_mode)
+        self.bind("<Button-1>", self.start_move)
+        self.bind("<ButtonRelease-1>", self.stop_move)
+        self.bind("<B1-Motion>", self.on_move)
     
     def add_message(self, sender, text):
         self.textbox.configure(state="normal")
@@ -149,6 +155,52 @@ class Dashboard(ctk.CTk):
         display_lines = min(line_count, 5)
         new_height = 35 + (display_lines - 1) * 20
         self.input_field.configure(height=new_height)
+
+    def toggle_mini_mode(self, event=None):
+        if not hasattr(self, "is_mini"): self.is_mini = False
+        
+        if not self.is_mini:
+            self.is_mini = True
+            
+            self.my_label.pack_forget()
+            self.textbox.pack_forget()
+            self.input_frame.pack_forget()
+            
+            self.geometry("460x140") 
+            self.attributes("-topmost", True)
+            
+            self.my_canvas.pack(expand=True, pady=10)
+            self.statusLabel.pack(expand=True, pady=(0, 10))
+            
+        else:
+            self.is_mini = False
+            
+            self.attributes("-topmost", False)
+            self.geometry("500x500")
+            
+            self.statusLabel.pack_forget()
+            self.my_canvas.pack_forget()
+            
+            self.my_label.pack(pady=5)
+            self.textbox.pack(pady=5, padx=30)
+            self.my_canvas.pack(pady=5)
+            self.statusLabel.pack(pady=1)
+            self.input_frame.pack(side="bottom", fill="x", pady=20, padx=30)
+
+    def start_move(self, event):
+        self.x = event.x
+        self.y = event.y
+
+    def stop_move(self, event):
+        self.x = None
+        self.y = None
+
+    def on_move(self, event):
+        deltax = event.x - self.x
+        deltay = event.y - self.y
+        x = self.winfo_x() + deltax
+        y = self.winfo_y() + deltay
+        self.geometry(f"+{x}+{y}")
 
 if __name__ == "__main__":
     app = Dashboard()
