@@ -27,7 +27,7 @@ def greet():
     else:
         return f"Good evening {config.USER_NAME}. NOVA online."
 
-def main(dashboard,message_queue):
+def main(dashboard,message_queue,input_queue):
     brain = Brain()
     voice = Voice()
     weather = WeatherModule()
@@ -64,19 +64,27 @@ def main(dashboard,message_queue):
 
     while True:
         query = ""
-        try:
-            msg = message_queue.get_nowait()
-            if msg["type"] == "text_input":
+        message_queue.put({"type": "status", "value": "LISTENING"})
+        
+        voice_result = [None]
+        def do_listen():
+            voice_result[0] = voice.listen()
+        
+        listen_thread = threading.Thread(target=do_listen, daemon=True)
+        listen_thread.start()
+        
+        while listen_thread.is_alive():
+            try:
+                msg = input_queue.get_nowait()
                 query = msg["text"]
-        except:
-            pass
-
+                break
+            except:
+                time.sleep(0.1)
+        
         if not query:
-            message_queue.put({"type": "status", "value": "LISTENING"})
-            query = voice.listen()
+            listen_thread.join()
+            query = voice_result[0]
 
-        if not query:
-            continue
         message_queue.put({"type": "message", "sender": "You", "text": query})
         message_queue.put({"type": "status", "value": "THINKING"})
 
@@ -169,14 +177,14 @@ def main(dashboard,message_queue):
                 voice.speak("What is your message?")
                 message_queue.put({"type": "status", "value": "LISTENING"})
                 message = voice.listen()
-                message_queue.put({"type": "message", "sender": "You", "text": query})
+                message_queue.put({"type": "message", "sender": "You", "text": message})
                 message = message + "\n\n_- This message was sent to you by NOVA_"
                 message_queue.put({"type": "message", "sender": "NOVA", "text": "To whom do you want to send the message?"})
                 message_queue.put({"type": "status", "value": "SPEAKING"})
                 voice.speak("To whom do you want to send the message?")
                 message_queue.put({"type": "status", "value": "LISTENING"})
                 name = voice.listen().lower()
-                message_queue.put({"type": "message", "sender": "You", "text": query})
+                message_queue.put({"type": "message", "sender": "You", "text": name})
                 number = config.CONTACTS.get(name, "+916363466319")
                 if name not in config.CONTACTS:
                     message_queue.put({"type": "message", "sender": "NOVA", "text": f"I couldn't find {name} in your contacts, so I'll send it to your default number."})
@@ -266,11 +274,12 @@ def main(dashboard,message_queue):
 
 if __name__ == "__main__":
     message_queue = queue.Queue()
-    app = Dashboard(message_queue)
+    input_queue = queue.Queue()
+    app = Dashboard(message_queue, input_queue)
     
     nova_thread = threading.Thread(
         target=main, 
-        args=(app, message_queue),
+        args=(app, message_queue, input_queue),
         daemon=True
     )
     nova_thread.start()

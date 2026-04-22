@@ -6,7 +6,7 @@ ctk.set_default_color_theme("blue")
 ctk.FontManager.load_font("cufel.otf")
 
 class Dashboard(ctk.CTk):
-    def __init__(self, message_queue):
+    def __init__(self, message_queue, input_queue):
         super().__init__()
 
         self.isListening = False
@@ -68,6 +68,7 @@ class Dashboard(ctk.CTk):
         self.textbox.tag_config("nova", foreground="#00d4ff")
         self.textbox.tag_config("you", foreground="#ffffff")
         self.message_queue = message_queue
+        self.input_queue = input_queue
     
     def add_message(self, sender, text):
         self.textbox.configure(state="normal")
@@ -130,10 +131,9 @@ class Dashboard(ctk.CTk):
     def handle_input(self):
         text = self.input_field.get("1.0", "end-1c").strip()
         if text:
-            self.add_message("You", text)
             self.input_field.delete("1.0", "end")
             self.input_field.configure(height=35)
-            self.message_queue.put({"type": "text_input", "text": text})
+            self.input_queue.put({"text": text})
             self.set_status("THINKING")
 
     def handle_enter(self, event):
