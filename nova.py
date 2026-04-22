@@ -9,6 +9,7 @@ from modules.reminder import ReminderModule
 from modules.whatsapp import WhatsappModule
 from modules.spotify import SpotifyModule
 from modules.study import StudyModule
+from core.memory import Memory
 
 from gui.dashboard import Dashboard
 
@@ -28,7 +29,8 @@ def greet():
         return f"Good evening {config.USER_NAME}. NOVA online."
 
 def main(dashboard,message_queue,input_queue):
-    brain = Brain()
+    memory = Memory()
+    brain = Brain(system_prompt_addition=memory.summary)
     voice = Voice()
     weather = WeatherModule()
     system = SystemModule()
@@ -91,6 +93,8 @@ def main(dashboard,message_queue,input_queue):
         if "quit" in query or "exit" in query or "goodbye" in query:
             message_queue.put({"type": "message", "sender": "NOVA", "text": "Shutting down. Goodbye."})
             message_queue.put({"type": "status", "value": "SPEAKING"})
+            voice.speak("Summarizing session memory...")
+            memory.summarize_and_save(brain)
             voice.speak("Shutting down. Goodbye.")
             message_queue.put({"type": "status", "value": "LISTENING"})
             dashboard.after(0, dashboard.destroy)
@@ -259,17 +263,21 @@ def main(dashboard,message_queue,input_queue):
                     message_queue.put({"type": "status", "value": "LISTENING"})
 
             elif intent == "CONVERSATION":
+                memory.log("Shreyans", query)
                 response = brain.ask(query)
                 message_queue.put({"type": "message", "sender": "NOVA", "text": response})
                 message_queue.put({"type": "status", "value": "SPEAKING"})
                 voice.speak(response)
+                memory.log("NOVA", response)
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
             else:
+                memory.log("Shreyans", query)
                 response = brain.ask(query)
                 message_queue.put({"type": "message", "sender": "NOVA", "text": response})
                 message_queue.put({"type": "status", "value": "SPEAKING"})
                 voice.speak(response)
+                memory.log("NOVA", response)
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
 if __name__ == "__main__":

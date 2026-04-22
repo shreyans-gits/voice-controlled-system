@@ -24,7 +24,7 @@ TTS_VOICE = TTS_Voice
 TTS_LANGUAGE = TTS_Lang
 
 # AI settings
-AI_MODEL = "llama-3.3-70b-versatile"   # free and fast on Groq
+AI_MODEL = "llama-3.3-70b-versatile" 
 
 # Weather settings
 CITY = City

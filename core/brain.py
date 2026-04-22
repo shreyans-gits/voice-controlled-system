@@ -2,7 +2,7 @@ from groq import Groq
 import config
 
 class Brain:
-    def __init__(self):
+    def __init__(self,system_prompt_addition=""):
         self.client = Groq(api_key=config.GROQ_API_KEY)
         self.model = config.AI_MODEL
         self.conversation_history = []
@@ -13,7 +13,11 @@ class Brain:
         You are talking to {config.USER_NAME}.
         Keep responses concise and conversational — you are being spoken aloud.
         No bullet points or markdown. Just natural sentences.
+        {f"Known facts about the user from past sessions: {system_prompt_addition}" if system_prompt_addition else ""}
         """
+
+        # memory_data = Memory().load()
+        # self.system_prompt = f"You are NOVA, a helpful AI assistant. Known facts about user: {memory_data}"
 
     def get_intent(self,query):
         try:
@@ -110,3 +114,21 @@ class Brain:
 
     def clear_memory(self):
         self.conversation_history = []
+
+    def summarize(self, session_log, old_summary):
+        prompt = f"""
+        You are an expert at condensing information. 
+        Below is a chat log between an AI (NOVA) and Shreyans, and an old summary of Shreyans.
+        
+        OLD SUMMARY: {old_summary}
+        NEW LOG: {session_log}
+        
+        Task: Extract key facts about Shreyans (preferences, interests, recent activities, or school updates).
+        Merge them with the old summary into a single, cohesive, bullet-pointed paragraph. 
+        Keep it under 150 words. Focus on facts that would help NOVA be a better assistant.
+        """
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content
