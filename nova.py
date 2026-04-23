@@ -10,6 +10,7 @@ from modules.whatsapp import WhatsappModule
 from modules.spotify import SpotifyModule
 from modules.study import StudyModule
 from modules.screen_reader import ScreenReaderModule
+from modules.app_launcher import AppLauncherModule
 
 from core.memory import Memory
 
@@ -43,6 +44,7 @@ def main(dashboard,message_queue,input_queue):
     spotify = SpotifyModule()
     study = StudyModule()
     screen = ScreenReaderModule()
+    launcher = AppLauncherModule()
 
     def reminder_checker():
         while True:
@@ -284,6 +286,15 @@ def main(dashboard,message_queue,input_queue):
             elif intent == "SCREEN_SUMMARIZE":
                 message_queue.put({"type": "status", "value": "THINKING"})
                 result = screen.read("Summarize the main content on this screen")
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "APP_OPEN":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                subject = brain.extract_subject(query, intent)
+                result = launcher.launch_app(subject)
                 message_queue.put({"type": "message", "sender": "NOVA", "text": result})
                 message_queue.put({"type": "status", "value": "SPEAKING"})
                 voice.speak(result)

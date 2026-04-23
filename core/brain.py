@@ -25,7 +25,7 @@ class Brain:
             You are an intent classifier. Classify the following query into exactly one of these intents:
             WEATHER, BATTERY, CPU, RAM, SEARCH, WATCH, WIKIPEDIA, NEWS, REMINDER, 
             WHATSAPP, SPOTIFY_PLAY, SPOTIFY_PAUSE, SPOTIFY_SKIP, POMODORO, 
-            SUMMARIZE, FLASHCARD, CONVERSATION, SCREEN_READ, SCREEN_EXPLAIN, SCREEN_SUMMARIZE
+            SUMMARIZE, FLASHCARD, CONVERSATION, SCREEN_READ, SCREEN_EXPLAIN, SCREEN_SUMMARIZE, APP_OPEN
 
             Rules:
             - Reply with just the intent word, nothing else
