@@ -13,6 +13,7 @@ contacts = os.getenv("contacts")
 spotify_client_ID = os.getenv("spotify_client_id")
 spotify_client_secret = os.getenv("spotify_client_secret")
 spotify_uri = os.getenv("spotify_uri")
+gemini_api_key = os.getenv("gemini_api_key")
 
 # BRAIN
 GROQ_API_KEY = API_KEY
@@ -42,3 +43,6 @@ else:
 SPOTIFY_ID = spotify_client_ID
 SPOTIFY_SECRET = spotify_client_secret
 SPOTIFY_URI = spotify_uri
+
+# GEMINI
+GEMINI_KEY = gemini_api_key

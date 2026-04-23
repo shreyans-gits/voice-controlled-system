@@ -9,6 +9,8 @@ from modules.reminder import ReminderModule
 from modules.whatsapp import WhatsappModule
 from modules.spotify import SpotifyModule
 from modules.study import StudyModule
+from modules.screen_reader import ScreenReaderModule
+
 from core.memory import Memory
 
 from gui.dashboard import Dashboard
@@ -40,6 +42,7 @@ def main(dashboard,message_queue,input_queue):
     wp = WhatsappModule()
     spotify = SpotifyModule()
     study = StudyModule()
+    screen = ScreenReaderModule()
 
     def reminder_checker():
         while True:
@@ -261,6 +264,30 @@ def main(dashboard,message_queue,input_queue):
                     message_queue.put({"type": "status", "value": "SPEAKING"})
                     voice.speak("I didn't catch the topic. Please try again.")
                     message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "SCREEN_READ":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                result = screen.read("Describe everything on this screen")
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "SCREEN_EXPLAIN":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                result = screen.read("Explain what is happening on this screen in detail")
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "SCREEN_SUMMARIZE":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                result = screen.read("Summarize the main content on this screen")
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
 
             elif intent == "CONVERSATION":
                 memory.log("Shreyans", query)
