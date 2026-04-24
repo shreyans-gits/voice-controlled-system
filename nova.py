@@ -304,7 +304,15 @@ def main(dashboard,message_queue,input_queue):
 
             elif intent == "CLIPBOARD_EXPLAIN":
                 message_queue.put({"type": "status", "value": "THINKING"})
-                result = brain.summary(clipboard.get())
+                result = brain.summary(clipboard.explain())
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "CLIPBOARD_TRANSLATE":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                result = brain.summary(clipboard.translate())
                 message_queue.put({"type": "message", "sender": "NOVA", "text": result})
                 message_queue.put({"type": "status", "value": "SPEAKING"})
                 voice.speak(result)
