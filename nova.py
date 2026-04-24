@@ -11,6 +11,7 @@ from modules.spotify import SpotifyModule
 from modules.study import StudyModule
 from modules.screen_reader import ScreenReaderModule
 from modules.app_launcher import AppLauncherModule
+from modules.clipboard import Clipboard
 
 from core.memory import Memory
 
@@ -45,6 +46,7 @@ def main(dashboard,message_queue,input_queue):
     study = StudyModule()
     screen = ScreenReaderModule()
     launcher = AppLauncherModule()
+    clipboard = Clipboard()
 
     def reminder_checker():
         while True:
@@ -295,6 +297,14 @@ def main(dashboard,message_queue,input_queue):
                 message_queue.put({"type": "status", "value": "THINKING"})
                 subject = brain.extract_subject(query, intent)
                 result = launcher.launch_app(subject)
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "CLIPBOARD_EXPLAIN":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                result = brain.summary(clipboard.get())
                 message_queue.put({"type": "message", "sender": "NOVA", "text": result})
                 message_queue.put({"type": "status", "value": "SPEAKING"})
                 voice.speak(result)

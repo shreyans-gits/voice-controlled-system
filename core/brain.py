@@ -25,7 +25,8 @@ class Brain:
             You are an intent classifier. Classify the following query into exactly one of these intents:
             WEATHER, BATTERY, CPU, RAM, SEARCH, WATCH, WIKIPEDIA, NEWS, REMINDER, 
             WHATSAPP, SPOTIFY_PLAY, SPOTIFY_PAUSE, SPOTIFY_SKIP, POMODORO, 
-            SUMMARIZE, FLASHCARD, CONVERSATION, SCREEN_READ, SCREEN_EXPLAIN, SCREEN_SUMMARIZE, APP_OPEN
+            SUMMARIZE, FLASHCARD, CONVERSATION, SCREEN_READ, SCREEN_EXPLAIN, SCREEN_SUMMARIZE, APP_OPEN, 
+            CLIPBOARD_EXPLAIN
 
             Rules:
             - Reply with just the intent word, nothing else
@@ -126,6 +127,21 @@ class Brain:
         Task: Extract key facts about Shreyans (preferences, interests, recent activities, or school updates).
         Merge them with the old summary into a single, cohesive, bullet-pointed paragraph. 
         Keep it under 150 words. Focus on facts that would help NOVA be a better assistant.
+        """
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content
+    
+    def summary(self,text):
+        prompt = f"""
+        You are an expert at condensing information. 
+        Below is one or 2 paragraphs of information
+        
+        Information : {text}
+        
+        Task: Extract key facts from these and give a short summary
         """
         response = self.client.chat.completions.create(
             model=self.model,
