@@ -18,6 +18,7 @@ from modules.voice_note import VoiceNoteModule
 from core.memory import Memory
 
 from gui.dashboard import Dashboard
+from gui.settings import SettingsWindow
 
 import datetime
 import time
@@ -382,6 +383,11 @@ def main(dashboard,message_queue,input_queue):
                 message_queue.put({"type": "message", "sender": "NOVA", "text": result})
                 message_queue.put({"type": "status", "value": "SPEAKING"})
                 voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "SETTINGS":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                dashboard.after(0, lambda: SettingsWindow(memory, voice_note, config))
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
             elif intent == "CONVERSATION":

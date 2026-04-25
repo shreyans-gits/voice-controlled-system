@@ -22,7 +22,7 @@ class SetupWizard(ctk.CTk):
 
     def render_ui(self):
         try:
-            logo_img = ctk.CTkImage(Image.open("Image/NOVA_High.png"), size=(80, 80))
+            logo_img = ctk.CTkImage(Image.open("Images/NOVA_High.png"), size=(80, 80))
             logo_label = ctk.CTkLabel(self.scroll_frame, image=logo_img, text="")
             logo_label.pack(pady=(10, 0))
         except:

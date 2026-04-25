@@ -9,9 +9,16 @@ import edge_tts
 
 class Voice:
     def __init__(self):
-        # Speech recognition setup
         self.recognizer = sr.Recognizer()
         self.recognizer.pause_threshold = 1
+
+    def get_speed(self):
+        import json
+        if os.path.exists("settings.json"):
+            with open("settings.json") as f:
+                data = json.load(f)
+                return data.get("voice_speed", "+0%")
+        return "+0%"
 
     def speak(self, text):
         print(f"N.O.V.A.: {text}")
@@ -22,13 +29,13 @@ class Voice:
 
             communicate = edge_tts.Communicate(
                 text=text,
-                voice=config.TTS_VOICE
+                voice=config.TTS_VOICE,
+                rate=self.get_speed()
             )
 
             await communicate.save(temp.name)
             return temp.name
 
-        # Run async internally (you stay sync)
         file_path = asyncio.run(generate())
 
         pygame.mixer.init()

@@ -28,7 +28,7 @@ class Brain:
             SUMMARIZE, FLASHCARD, CONVERSATION, SCREEN_READ, SCREEN_EXPLAIN, SCREEN_SUMMARIZE, APP_OPEN, 
             CLIPBOARD_EXPLAIN, CLIPBOARD_TRANSLATE,
             VOLUME_UP, VOLUME_DOWN, BRIGHTNESS_SET,
-            NOTE_ADD, NOTE_READ, NOTE_CLEAR
+            NOTE_ADD, NOTE_READ, NOTE_CLEAR, SETTINGS
 
             Rules:
             - Reply with just the intent word, nothing else
