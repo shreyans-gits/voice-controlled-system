@@ -10,9 +10,9 @@ class AppLauncherModule:
         }
 
     def launch_app(self,app_name):
-        app_name.lower().strip()
+        app_name = app_name.lower().strip()
         if app_name in self.apps:
             subprocess.Popen(self.apps[app_name])
             return f"Opening {app_name}"
         else:
-            return "error opening app"
+            return f"I don't know how to open {app_name}"

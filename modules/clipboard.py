@@ -24,7 +24,7 @@ class Clipboard:
             text_content = pc.paste()
             if text_content and text_content.strip():
                 translation_prompt = f"Translate the following text to English: {text_content}"
-                return 
+                return translation_prompt
             
         except Exception as e:
             print(f"Clipboard error : {e}")
