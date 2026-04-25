@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N.O.V.A. Documentation</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060608;
+    --surface: #0d0d14;
+    --surface2: #12121c;
+    --border: #1e1e2e;
+    --cyan: #00d4ff;
+    --cyan-dim: rgba(0, 212, 255, 0.08);
+    --cyan-glow: rgba(0, 212, 255, 0.15);
+    --text: #e2e2f0;
+    --text-dim: #666680;
+    --text-mid: #9999bb;
+    --green: #00ff88;
+    --yellow: #ffd700;
+    --red: #ff4466;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,212,255,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 260px;
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    left: 0; top: 0;
+    overflow-y: auto;
+    z-index: 100;
+    padding-bottom: 40px;
+  }
+
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo .logo-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--cyan);
+    letter-spacing: 4px;
+  }
+
+  .sidebar-logo .logo-sub {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-top: 4px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .sidebar-version {
+    display: inline-block;
+    background: var(--cyan-dim);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--cyan);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 8px;
+  }
+
+  .nav-section {
+    padding: 20px 24px 8px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .nav-item {
+    display: block;
+    padding: 9px 24px;
+    color: var(--text-mid);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+    position: relative;
+  }
+
+  .nav-item:hover {
+    color: var(--cyan);
+    background: var(--cyan-dim);
+    border-left-color: var(--cyan);
+  }
+
+  .nav-item.active {
+    color: var(--cyan);
+    background: var(--cyan-dim);
+    border-left-color: var(--cyan);
+  }
+
+  /* MAIN */
+  .main {
+    margin-left: 260px;
+    flex: 1;
+    max-width: 900px;
+    padding: 60px 64px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* SECTIONS */
+  .section {
+    margin-bottom: 80px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.7;
+  }
+
+  h1 {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    color: #fff;
+  }
+
+  h1 span { color: var(--cyan); }
+
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #fff;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 8px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  p {
+    color: var(--text-mid);
+    line-height: 1.8;
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+
+  /* HERO */
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--cyan-dim);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 4px;
+    padding: 6px 14px;
+    margin-bottom: 24px;
+  }
+
+  .hero-badge span {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 1px;
+  }
+
+  .hero-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .hero-desc {
+    font-size: 17px;
+    color: var(--text-mid);
+    line-height: 1.8;
+    max-width: 600px;
+    margin-bottom: 32px;
+  }
+
+  /* FLOW DIAGRAM */
+  .flow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    margin: 20px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .flow::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 14px;
+    color: var(--text-mid);
+  }
+
+  .flow-step:last-child { margin-bottom: 0; }
+
+  .flow-arrow {
+    color: var(--cyan);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .flow-step strong { color: var(--text); }
+
+  /* CODE BLOCKS */
+  pre, code {
+    font-family: 'Space Mono', monospace;
+  }
+
+  pre {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    position: relative;
+  }
+
+  pre::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 10px; right: 14px;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  code {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 7px;
+    font-size: 12px;
+    color: var(--cyan);
+  }
+
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  .comment { color: #444466; }
+  .kw { color: var(--cyan); }
+  .str { color: var(--green); }
+  .num { color: var(--yellow); }
+
+  /* TABLES */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    background: var(--surface2);
+    color: var(--cyan);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-mid);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td { background: var(--cyan-dim); }
+
+  td:first-child {
+    color: var(--text);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* MODULE CARDS */
+  .module-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .module-card:hover {
+    border-color: rgba(0,212,255,0.3);
+    transform: translateY(-2px);
+  }
+
+  .module-card-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .module-card-title::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--cyan);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .module-card p {
+    font-size: 13px;
+    margin-bottom: 12px;
+    color: var(--text-dim);
+  }
+
+  .cmd-list {
+    list-style: none;
+  }
+
+  .cmd-list li {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mid);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cmd-list li:last-child { border-bottom: none; }
+
+  .cmd-list li::before {
+    content: '›';
+    color: var(--cyan);
+    font-size: 14px;
+  }
+
+  /* CALLOUT BOXES */
+  .callout {
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-left: 3px solid;
+    font-size: 14px;
+  }
+
+  .callout-info {
+    background: rgba(0,212,255,0.05);
+    border-color: var(--cyan);
+    color: var(--text-mid);
+  }
+
+  .callout-warn {
+    background: rgba(255,215,0,0.05);
+    border-color: var(--yellow);
+    color: var(--text-mid);
+  }
+
+  .callout-title {
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .callout-info .callout-title { color: var(--cyan); }
+  .callout-warn .callout-title { color: var(--yellow); }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+
+  .badge-required { background: rgba(255,68,102,0.15); color: var(--red); border: 1px solid rgba(255,68,102,0.3); }
+  .badge-optional { background: rgba(255,215,0,0.1); color: var(--yellow); border: 1px solid rgba(255,215,0,0.2); }
+  .badge-free { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
+
+  /* STEPS */
+  .steps { margin: 20px 0; }
+
+  .step {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 28px;
+    position: relative;
+  }
+
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 36px;
+    bottom: -28px;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--cyan);
+    flex-shrink: 0;
+  }
+
+  .step-content { flex: 1; padding-top: 6px; }
+  .step-content h3 { color: var(--text); font-family: 'Syne', sans-serif; font-size: 15px; margin-bottom: 6px; }
+
+  /* STRUCTURE TREE */
+  .tree {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    line-height: 2;
+    color: var(--text-mid);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin: 16px 0;
+  }
+
+  .tree .dir { color: var(--cyan); font-weight: 700; }
+  .tree .comment { color: #333355; font-size: 11px; }
+  .tree .file { color: var(--text-mid); }
+
+  /* COMMAND REFERENCE */
+  .cmd-ref {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+
+  .cmd-ref-header {
+    background: var(--surface2);
+    padding: 12px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cmd-ref-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cmd-ref-item:last-child { border-bottom: none; }
+
+  .cmd-ref-item:hover { background: var(--cyan-dim); }
+
+  .cmd-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .cmd-intent {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    background: var(--cyan-dim);
+    border: 1px solid rgba(0,212,255,0.15);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer a { color: var(--cyan); text-decoration: none; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 32px 24px; }
+    .module-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">N.O.V.A.</div>
+    <div class="logo-sub">Neurally Optimized Voice Assistant</div>
+    <div class="sidebar-version">v1.0 — Phase 8</div>
+  </div>
+
+  <div class="nav-section">Getting Started</div>
+  <a href="#intro" class="nav-item">Introduction</a>
+  <a href="#installation" class="nav-item">Installation</a>
+  <a href="#setup" class="nav-item">First Time Setup</a>
+  <a href="#configuration" class="nav-item">Configuration</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="#how-it-works" class="nav-item">How It Works</a>
+  <a href="#structure" class="nav-item">Project Structure</a>
+  <a href="#intent-system" class="nav-item">Intent System</a>
+  <a href="#memory-system" class="nav-item">Memory System</a>
+
+  <div class="nav-section">Modules</div>
+  <a href="#core-modules" class="nav-item">Core Modules</a>
+  <a href="#system-modules" class="nav-item">System Modules</a>
+  <a href="#productivity" class="nav-item">Productivity</a>
+  <a href="#media" class="nav-item">Media & Search</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="#commands" class="nav-item">Voice Commands</a>
+  <a href="#api-keys" class="nav-item">API Keys</a>
+  <a href="#gui" class="nav-item">GUI Guide</a>
+  <a href="#contributing" class="nav-item">Contributing</a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- INTRO -->
+  <section class="section" id="intro">
+    <div class="hero-badge">
+      <div class="hero-dot"></div>
+      <span>Open Source — Python 3.13</span>
+    </div>
+    <h1>N.O.V.A.<br><span>Documentation</span></h1>
+    <p class="hero-desc">
+      A fully local, voice and text controlled AI desktop assistant. Talk to it, type to it — NOVA understands intent, routes to the right module, and responds through voice and a live chat window.
+    </p>
+    <div class="callout callout-info">
+      <div class="callout-title">What makes NOVA different</div>
+      NOVA isn't a wrapper around a chatbot. It has a real intent routing system, persistent memory that summarizes sessions using AI, 13 functional modules, full GUI with system tray, and a first-time setup wizard. Built entirely in Python, runs locally.
+    </div>
+  </section>
+
+  <!-- INSTALLATION -->
+  <section class="section" id="installation">
+    <div class="section-tag">Getting Started</div>
+    <h2>Installation</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Clone the repository</h3>
+          <pre data-lang="bash">git clone https://github.com/shreyans-gits/voice-controlled-system
+cd NOVA</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Create a virtual environment (recommended)</h3>
+          <pre data-lang="bash">python -m venv venv
+venv\Scripts\activate</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Install dependencies</h3>
+          <pre data-lang="bash">pip install -r requirements.txt</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3>Run the setup wizard</h3>
+          <pre data-lang="bash">python setup.py</pre>
+          <p>This opens a GUI where you enter your API keys and preferences. It generates your <code>.env</code> file automatically and then closes itself.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h3>Launch NOVA</h3>
+          <pre data-lang="bash">python nova.py</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">Windows Only</div>
+      NOVA is built for Windows. System control (volume, brightness), pycaw audio, and system tray features are Windows-specific. Linux/macOS support is not guaranteed.
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section class="section" id="setup">
+    <div class="section-tag">Getting Started</div>
+    <h2>First Time Setup</h2>
+    <p>Run <code>setup.py</code> before launching NOVA for the first time. It's a GUI wizard that walks you through every configuration option.</p>
+
+    <table>
+      <tr><th>Field</th><th>Description</th></tr>
+      <tr><td>Your Name</td><td>NOVA will use this to greet you and personalize responses</td></tr>
+      <tr><td>GROQ API Key</td><td>Powers the AI brain — get it free at console.groq.com</td></tr>
+      <tr><td>Gemini API Key</td><td>Used for Screen Reader and Clipboard vision features</td></tr>
+      <tr><td>News API Key</td><td>Required for the News module — free at newsapi.org</td></tr>
+      <tr><td>City</td><td>Used for live weather — just the city name</td></tr>
+      <tr><td>TTS Voice</td><td>Microsoft Neural voice name e.g. en-US-SteffanNeural</td></tr>
+      <tr><td>Spotify Credentials</td><td>Client ID, Secret, and Redirect URI from Spotify Developer Dashboard</td></tr>
+      <tr><td>Contacts</td><td>Name + phone number pairs for WhatsApp messaging</td></tr>
+    </table>
+
+    <p>After saving, <code>setup.py</code> deletes itself. Your <code>.env</code> file is created in the project root and is never committed to git.</p>
+  </section>
+
+  <!-- CONFIGURATION -->
+  <section class="section" id="configuration">
+    <div class="section-tag">Getting Started</div>
+    <h2>Configuration</h2>
+    <p>All configuration is read from <code>.env</code> via <code>config.py</code>. You never need to edit these files manually — use <code>setup.py</code> for initial setup and say <strong>"open settings"</strong> inside NOVA to change anything later.</p>
+
+    <pre data-lang=".env"><span class="comment"># GROQ</span>
+API_KEY = "your_groq_key"
+
+<span class="comment"># VOICE</span>
+TTS_Voice = "en-US-SteffanNeural"
+TTS_Lang = "en-in"
+
+<span class="comment"># LOCATION</span>
+CITY = "Bangalore"
+
+<span class="comment"># NEWS</span>
+NEWS_API_KEY = "your_news_key"
+
+<span class="comment"># CONTACTS</span>
+contacts = {"name": "+91xxxxxxxxxx"}
+
+<span class="comment"># SPOTIFY</span>
+spotify_client_id = "your_id"
+spotify_client_secret = "your_secret"
+spotify_uri = "http://127.0.0.1:8888/callback"
+
+<span class="comment"># GEMINI</span>
+gemini_api_key = "your_gemini_key"</pre>
+  </section>
+
+  <hr class="divider">
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how-it-works">
+    <div class="section-tag">Architecture</div>
+    <h2>How It Works</h2>
+
+    <div class="flow">
+      <div class="flow-step"><span class="flow-arrow">→</span><span>You <strong>speak</strong> or <strong>type</strong> a query</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span><code>voice.listen()</code> transcribes speech via Google Speech API, or text input is picked up from the GUI</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span><code>brain.get_intent()</code> sends the query to Groq — returns one word like <strong>WEATHER</strong> or <strong>CONVERSATION</strong></span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>If needed, <code>brain.extract_subject()</code> pulls the clean subject out — "play some Drake" → <strong>Drake</strong></span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>The correct <strong>module</strong> is called with the subject</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Result is displayed in the <strong>chat window</strong> and <strong>spoken aloud</strong></span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>If intent is <strong>CONVERSATION</strong>, the exchange is logged to memory</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>On shutdown, Groq <strong>summarizes the session</strong> and merges it with past memory</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Next startup, the summary is <strong>injected into the system prompt</strong> — NOVA remembers you</span></div>
+    </div>
+  </section>
+
+  <!-- STRUCTURE -->
+  <section class="section" id="structure">
+    <div class="section-tag">Architecture</div>
+    <h2>Project Structure</h2>
+
+    <div class="tree">
+      <div><span class="dir">NOVA/</span></div>
+      <div>├── <span class="dir">core/</span></div>
+      <div>│   ├── brain.py &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Groq AI, intent detection, summarization</span></div>
+      <div>│   ├── memory.py &nbsp;&nbsp;<span class="comment">← Session logging, persistent memory</span></div>
+      <div>│   └── voice.py &nbsp;&nbsp;&nbsp;<span class="comment">← speak() and listen()</span></div>
+      <div>├── <span class="dir">gui/</span></div>
+      <div>│   ├── dashboard.py <span class="comment">← Main CustomTkinter GUI</span></div>
+      <div>│   └── settings.py &nbsp;<span class="comment">← Settings window</span></div>
+      <div>├── <span class="dir">modules/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← One file per feature</span></div>
+      <div>│   ├── app_launcher.py</div>
+      <div>│   ├── clipboard.py</div>
+      <div>│   ├── news.py</div>
+      <div>│   ├── reminder.py</div>
+      <div>│   ├── screen_reader.py</div>
+      <div>│   ├── search.py</div>
+      <div>│   ├── spotify.py</div>
+      <div>│   ├── study.py</div>
+      <div>│   ├── system_control.py</div>
+      <div>│   ├── system.py</div>
+      <div>│   ├── voice_note.py</div>
+      <div>│   ├── weather.py</div>
+      <div>│   └── whatsapp.py</div>
+      <div>├── <span class="dir">Images/</span></div>
+      <div>├── .env &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Never committed</span></div>
+      <div>├── config.py</div>
+      <div>├── nova.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Entry point</span></div>
+      <div>└── setup.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← First time setup wizard</span></div>
+    </div>
+  </section>
+
+  <!-- INTENT SYSTEM -->
+  <section class="section" id="intent-system">
+    <div class="section-tag">Architecture</div>
+    <h2>Intent System</h2>
+    <p>Every query goes through <code>brain.get_intent()</code> which sends it to Groq with a classification prompt. Groq returns exactly one intent word. This word is used in <code>nova.py</code> to route to the correct module.</p>
+
+    <table>
+      <tr><th>Intent</th><th>Module</th><th>Example Query</th></tr>
+      <tr><td>WEATHER</td><td>weather.py</td><td>"What's the weather like?"</td></tr>
+      <tr><td>BATTERY / CPU / RAM</td><td>system.py</td><td>"How's my battery?"</td></tr>
+      <tr><td>SEARCH</td><td>search.py</td><td>"Search for Python tutorials"</td></tr>
+      <tr><td>WATCH</td><td>search.py</td><td>"Watch lofi music"</td></tr>
+      <tr><td>WIKIPEDIA</td><td>search.py</td><td>"Tell me about black holes"</td></tr>
+      <tr><td>NEWS</td><td>news.py</td><td>"What's in the news?"</td></tr>
+      <tr><td>REMINDER</td><td>reminder.py</td><td>"Set a reminder"</td></tr>
+      <tr><td>WHATSAPP</td><td>whatsapp.py</td><td>"Send a WhatsApp to Mom"</td></tr>
+      <tr><td>SPOTIFY_PLAY/PAUSE/SKIP</td><td>spotify.py</td><td>"Play some Drake"</td></tr>
+      <tr><td>POMODORO / SUMMARIZE / FLASHCARD</td><td>study.py</td><td>"Start a pomodoro"</td></tr>
+      <tr><td>SCREEN_READ / EXPLAIN / SUMMARIZE</td><td>screen_reader.py</td><td>"What's on my screen?"</td></tr>
+      <tr><td>APP_OPEN</td><td>app_launcher.py</td><td>"Open Chrome"</td></tr>
+      <tr><td>VOLUME_UP / VOLUME_DOWN</td><td>system_control.py</td><td>"Volume up by 20"</td></tr>
+      <tr><td>BRIGHTNESS_SET</td><td>system_control.py</td><td>"Set brightness to 50"</td></tr>
+      <tr><td>NOTE_ADD / NOTE_READ / NOTE_CLEAR</td><td>voice_note.py</td><td>"Take a note"</td></tr>
+      <tr><td>CLIPBOARD_SUMMARIZE / TRANSLATE / EXPLAIN</td><td>clipboard.py</td><td>"Summarize what I copied"</td></tr>
+      <tr><td>SETTINGS</td><td>gui/settings.py</td><td>"Open settings"</td></tr>
+      <tr><td>CONVERSATION</td><td>brain.ask()</td><td>Anything else</td></tr>
+    </table>
+
+    <p>To add a new intent, add it to the intent list in <code>brain.get_intent()</code>, create your module, and add the <code>elif intent == "YOUR_INTENT"</code> block in <code>nova.py</code>.</p>
+  </section>
+
+  <!-- MEMORY SYSTEM -->
+  <section class="section" id="memory-system">
+    <div class="section-tag">Architecture</div>
+    <h2>Memory System</h2>
+    <p>NOVA has persistent memory across sessions. It doesn't store raw logs — it uses Groq to compress conversations into a meaningful summary of who you are.</p>
+
+    <div class="flow">
+      <div class="flow-step"><span class="flow-arrow">→</span><span>During a session, CONVERSATION exchanges are logged in RAM via <code>memory.log()</code></span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>On shutdown, <code>memory.summarize_and_save(brain)</code> sends the log to Groq</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Groq extracts key facts and merges them with the previous summary</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Final summary saved to <code>memory.json</code> — under 150 words</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Next startup, summary injected into the system prompt so NOVA already knows you</span></div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Say "clear your memory"</div>
+      This triggers the FORGET intent which calls <code>memory.clear()</code>, wiping both the session log and <code>memory.json</code>. You can also clear memory from the Settings window.
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- CORE MODULES -->
+  <section class="section" id="core-modules">
+    <div class="section-tag">Modules</div>
+    <h2>Core Modules</h2>
+
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-card-title">brain.py</div>
+        <p>The AI backbone. Handles intent classification, subject extraction, number extraction, conversation history, and session summarization. Uses Groq's Llama 3.3 70b model.</p>
+        <ul class="cmd-list">
+          <li>get_intent(query)</li>
+          <li>extract_subject(query, intent)</li>
+          <li>extract_number(query, intent)</li>
+          <li>ask(user_input)</li>
+          <li>summarize(log, old_summary)</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">memory.py</div>
+        <p>Manages persistent memory. Logs conversation exchanges during the session and compresses them into a summary on shutdown.</p>
+        <ul class="cmd-list">
+          <li>load() — reads memory.json</li>
+          <li>log(sender, text)</li>
+          <li>summarize_and_save(brain)</li>
+          <li>clear()</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">voice.py</div>
+        <p>Handles all audio I/O. Speech recognition via Google Speech API, TTS via Microsoft edge_tts with configurable voice and speed.</p>
+        <ul class="cmd-list">
+          <li>speak(text)</li>
+          <li>listen() → query string</li>
+          <li>get_speed() → reads settings.json</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">dashboard.py</div>
+        <p>The main GUI. CustomTkinter window with color-coded chat, animated waveform, status indicator, text input, and system tray integration.</p>
+        <ul class="cmd-list">
+          <li>add_message(sender, text)</li>
+          <li>set_status(value)</li>
+          <li>animate_waveform()</li>
+          <li>handle_input()</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SYSTEM MODULES -->
+  <section class="section" id="system-modules">
+    <div class="section-tag">Modules</div>
+    <h2>System Modules</h2>
+
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-card-title">system.py</div>
+        <p>Reports hardware stats using psutil.</p>
+        <ul class="cmd-list">
+          <li>"How's my battery?"</li>
+          <li>"Check CPU usage"</li>
+          <li>"How's my RAM?"</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">system_control.py</div>
+        <p>Controls Windows audio via pycaw and screen brightness via screen-brightness-control.</p>
+        <ul class="cmd-list">
+          <li>"Volume up by 20"</li>
+          <li>"Volume down by 10"</li>
+          <li>"Set brightness to 50"</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">app_launcher.py</div>
+        <p>Opens applications by voice. App paths are configured in the module's apps dictionary.</p>
+        <ul class="cmd-list">
+          <li>"Open Chrome"</li>
+          <li>"Open Notepad"</li>
+          <li>"Launch Calculator"</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">screen_reader.py</div>
+        <p>Takes a screenshot and sends it to Gemini Vision. NOVA describes, explains, or summarizes what's on screen.</p>
+        <ul class="cmd-list">
+          <li>"What's on my screen?"</li>
+          <li>"Explain this error"</li>
+          <li>"Summarize this page"</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTIVITY -->
+  <section class="section" id="productivity">
+    <div class="section-tag">Modules</div>
+    <h2>Productivity</h2>
+
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-card-title">reminder.py</div>
+        <p>Sets timed reminders that run in a background thread. Fires a desktop notification and speaks the reminder aloud when due.</p>
+        <ul class="cmd-list">
+          <li>"Set a reminder"</li>
+          <li>NOVA asks: what + how many minutes</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">study.py</div>
+        <p>Study tools — Pomodoro timer, PDF summarizer using PyPDF2 + Groq, and flashcard generator.</p>
+        <ul class="cmd-list">
+          <li>"Start a pomodoro for 25 minutes"</li>
+          <li>"Summarize my PDF"</li>
+          <li>"Generate flashcards"</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">voice_note.py</div>
+        <p>Saves spoken notes to notes.json with timestamps. Reads them back on demand.</p>
+        <ul class="cmd-list">
+          <li>"Take a note"</li>
+          <li>"Read my notes"</li>
+          <li>"Clear my notes"</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">clipboard.py</div>
+        <p>Reads clipboard content — text or image. Uses Groq for text operations and Gemini Vision for images.</p>
+        <ul class="cmd-list">
+          <li>"Summarize what I copied"</li>
+          <li>"Translate my clipboard"</li>
+          <li>"Explain this"</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- MEDIA & SEARCH -->
+  <section class="section" id="media">
+    <div class="section-tag">Modules</div>
+    <h2>Media & Search</h2>
+
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-card-title">weather.py</div>
+        <p>Live weather via Open-Meteo API. No API key required. Uses your configured city name.</p>
+        <ul class="cmd-list">
+          <li>"What's the weather?"</li>
+          <li>"How's the weather today?"</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">news.py</div>
+        <p>Fetches top 5 headlines via NewsAPI. Reads them aloud one by one.</p>
+        <ul class="cmd-list">
+          <li>"What's in the news?"</li>
+          <li>"Read me the headlines"</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">search.py</div>
+        <p>Opens Google, YouTube, or fetches a Wikipedia summary depending on intent.</p>
+        <ul class="cmd-list">
+          <li>"Search for Python tutorials"</li>
+          <li>"Watch lofi music"</li>
+          <li>"Tell me about black holes"</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">spotify.py</div>
+        <p>Controls Spotify via the Spotipy library. Requires Spotify Developer credentials.</p>
+        <ul class="cmd-list">
+          <li>"Play some Drake"</li>
+          <li>"Pause the music"</li>
+          <li>"Skip this song"</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-card-title">whatsapp.py</div>
+        <p>Sends WhatsApp messages via pywhatkit. Contacts are configured in setup.py and editable in settings.</p>
+        <ul class="cmd-list">
+          <li>"Send a WhatsApp to Mom"</li>
+          <li>NOVA asks: message + recipient</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- COMMANDS -->
+  <section class="section" id="commands">
+    <div class="section-tag">Reference</div>
+    <h2>Voice Commands</h2>
+    <p>These are example phrases. NOVA uses AI classification so phrasing doesn't need to be exact — natural language works.</p>
+
+    <div class="cmd-ref">
+      <div class="cmd-ref-header">System</div>
+      <div class="cmd-ref-item"><span class="cmd-text">"How's my battery?"</span><span class="cmd-intent">BATTERY</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Check CPU usage"</span><span class="cmd-intent">CPU</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Volume up by 20"</span><span class="cmd-intent">VOLUME_UP</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Set brightness to 40"</span><span class="cmd-intent">BRIGHTNESS_SET</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Open Chrome"</span><span class="cmd-intent">APP_OPEN</span></div>
+    </div>
+
+    <div class="cmd-ref">
+      <div class="cmd-ref-header">Information</div>
+      <div class="cmd-ref-item"><span class="cmd-text">"What's the weather like?"</span><span class="cmd-intent">WEATHER</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"What's in the news?"</span><span class="cmd-intent">NEWS</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Tell me about black holes"</span><span class="cmd-intent">WIKIPEDIA</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Search for Python tutorials"</span><span class="cmd-intent">SEARCH</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"What's on my screen?"</span><span class="cmd-intent">SCREEN_READ</span></div>
+    </div>
+
+    <div class="cmd-ref">
+      <div class="cmd-ref-header">Productivity</div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Set a reminder"</span><span class="cmd-intent">REMINDER</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Take a note"</span><span class="cmd-intent">NOTE_ADD</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Read my notes"</span><span class="cmd-intent">NOTE_READ</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Start a pomodoro for 25 minutes"</span><span class="cmd-intent">POMODORO</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Generate flashcards"</span><span class="cmd-intent">FLASHCARD</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Summarize what I copied"</span><span class="cmd-intent">CLIPBOARD_SUMMARIZE</span></div>
+    </div>
+
+    <div class="cmd-ref">
+      <div class="cmd-ref-header">Media</div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Play some Drake on Spotify"</span><span class="cmd-intent">SPOTIFY_PLAY</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Pause the music"</span><span class="cmd-intent">SPOTIFY_PAUSE</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Skip this song"</span><span class="cmd-intent">SPOTIFY_SKIP</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Watch lofi music"</span><span class="cmd-intent">WATCH</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Send a WhatsApp to Mom"</span><span class="cmd-intent">WHATSAPP</span></div>
+    </div>
+
+    <div class="cmd-ref">
+      <div class="cmd-ref-header">NOVA Control</div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Open settings"</span><span class="cmd-intent">SETTINGS</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Clear your memory"</span><span class="cmd-intent">FORGET</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Goodbye" / "Exit" / "Quit"</span><span class="cmd-intent">SHUTDOWN</span></div>
+    </div>
+  </section>
+
+  <!-- API KEYS -->
+  <section class="section" id="api-keys">
+    <div class="section-tag">Reference</div>
+    <h2>API Keys</h2>
+
+    <table>
+      <tr><th>Service</th><th>Used For</th><th>Where to Get</th><th>Cost</th></tr>
+      <tr>
+        <td>Groq</td>
+        <td>AI brain, intent routing, summarization</td>
+        <td>console.groq.com</td>
+        <td><span class="badge badge-free">FREE</span></td>
+      </tr>
+      <tr>
+        <td>Gemini</td>
+        <td>Screen reader, clipboard image analysis</td>
+        <td>aistudio.google.com</td>
+        <td><span class="badge badge-free">FREE</span></td>
+      </tr>
+      <tr>
+        <td>NewsAPI</td>
+        <td>News headlines</td>
+        <td>newsapi.org</td>
+        <td><span class="badge badge-free">FREE</span></td>
+      </tr>
+      <tr>
+        <td>Spotify</td>
+        <td>Music playback control</td>
+        <td>developer.spotify.com</td>
+        <td><span class="badge badge-optional">OPTIONAL</span></td>
+      </tr>
+    </table>
+
+    <div class="callout callout-info">
+      <div class="callout-title">No API key for Weather</div>
+      The Weather module uses Open-Meteo which is completely free and requires no API key or signup.
+    </div>
+  </section>
+
+  <!-- GUI -->
+  <section class="section" id="gui">
+    <div class="section-tag">Reference</div>
+    <h2>GUI Guide</h2>
+
+    <table>
+      <tr><th>Element</th><th>Description</th></tr>
+      <tr><td>Chat Window</td><td>NOVA messages in cyan, your messages in white. Auto-scrolls to latest.</td></tr>
+      <tr><td>Status Indicator</td><td>● IDLE / ● LISTENING (green) / ● THINKING (yellow) / ● SPEAKING (blue)</td></tr>
+      <tr><td>Waveform</td><td>Animated bars that pulse when NOVA is actively listening</td></tr>
+      <tr><td>Text Input</td><td>Type and press Enter to send. Shift+Enter for a new line.</td></tr>
+      <tr><td>System Tray</td><td>Closing the window minimizes to tray — NOVA keeps running. Right-click for options.</td></tr>
+      <tr><td>Settings</td><td>Say "open settings" or access via tray. Clear memory, adjust voice speed, manage contacts.</td></tr>
+    </table>
+  </section>
+
+  <!-- CONTRIBUTING -->
+  <section class="section" id="contributing">
+    <div class="section-tag">Reference</div>
+    <h2>Contributing</h2>
+    <p>Adding a new module to NOVA is straightforward. Every module follows the same pattern:</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Create your module file</h3>
+          <p>Add a new file in <code>modules/</code>. Create a class with an <code>__init__</code> and the methods you need.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Add your intent to brain.py</h3>
+          <p>Add your new intent word to the list inside <code>get_intent()</code>'s prompt so Groq knows it exists.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Import and initialize in nova.py</h3>
+          <p>Import your module at the top and initialize it in the <code>main()</code> function alongside the others.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3>Add the intent handler</h3>
+          <p>Add an <code>elif intent == "YOUR_INTENT":</code> block in the main loop in <code>nova.py</code>. Call your module, put the result in <code>message_queue</code>, and call <code>voice.speak()</code>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <span>N.O.V.A. — Built by Shreyans Sahu</span>
+    <a href="https://github.com/shreyans-gits/voice-controlled-system">GitHub →</a>
+  </div>
+
+</main>
+
+<script>
+  // Active nav highlighting on scroll
+  const sections = document.querySelectorAll('.section[id]');
+  const navItems = document.querySelectorAll('.nav-item');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navItems.forEach(item => item.classList.remove('active'));
+        const active = document.querySelector(`.nav-item[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
