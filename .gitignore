@@ -8,3 +8,4 @@ test.py
 PyWhatKit_DB.txt
 *.cache
 memory.json
+notes.json

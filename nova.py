@@ -13,6 +13,7 @@ from modules.screen_reader import ScreenReaderModule
 from modules.app_launcher import AppLauncherModule
 from modules.clipboard import Clipboard
 # from modules.system_control import SystemControlModule
+from modules.voice_note import VoiceNoteModule
 
 from core.memory import Memory
 
@@ -49,6 +50,7 @@ def main(dashboard,message_queue,input_queue):
     launcher = AppLauncherModule()
     clipboard = Clipboard()
     # systemControl = SystemControlModule()
+    voice_note = VoiceNoteModule()
 
     def reminder_checker():
         while True:
@@ -345,7 +347,42 @@ def main(dashboard,message_queue,input_queue):
             #     message_queue.put({"type": "message", "sender": "NOVA", "text": result})
             #     message_queue.put({"type": "status", "value": "SPEAKING"})
             #     voice.speak(result)
-            #     message_queue.put({"type": "status", "value": "LISTENING"})            
+            #     message_queue.put({"type": "status", "value": "LISTENING"})    
+
+            elif intent == "NOTE_ADD":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                text = brain.extract_subject(query, intent)
+                if text:
+                    result = voice_note.add_note(text)
+                else:
+                    result = "I didn't catch what you wanted me to note down."
+                    
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "NOTE_READ":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                raw_num = brain.extract_number(query, intent)
+                try:
+                    number = int(raw_num) if raw_num else 1
+                except ValueError:
+                    number = 1
+                    
+                result = voice_note.read_note(number)
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "NOTE_CLEAR":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                result = voice_note.clear_notes()
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
 
             elif intent == "CONVERSATION":
                 memory.log("Shreyans", query)
