@@ -4,6 +4,7 @@ import ast
 
 load_dotenv()
 
+User_Name = os.getenv("username")
 API_KEY = os.getenv("API_KEY")
 TTS_Voice = os.getenv("TTS_Voice")
 TTS_Lang = os.getenv("TTS_Lang")
@@ -18,7 +19,7 @@ gemini_api_key = os.getenv("gemini_api_key")
 # BRAIN
 GROQ_API_KEY = API_KEY
 ASSISTANT_NAME = "NOVA"
-USER_NAME = "Shreyans"
+USER_NAME = User_Name
 
 # Voice settings
 TTS_VOICE = TTS_Voice
