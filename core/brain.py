@@ -26,7 +26,8 @@ class Brain:
             WEATHER, BATTERY, CPU, RAM, SEARCH, WATCH, WIKIPEDIA, NEWS, REMINDER, 
             WHATSAPP, SPOTIFY_PLAY, SPOTIFY_PAUSE, SPOTIFY_SKIP, POMODORO, 
             SUMMARIZE, FLASHCARD, CONVERSATION, SCREEN_READ, SCREEN_EXPLAIN, SCREEN_SUMMARIZE, APP_OPEN, 
-            CLIPBOARD_EXPLAIN, CLIPBOARD_TRANSLATE
+            CLIPBOARD_EXPLAIN, CLIPBOARD_TRANSLATE,
+            VOLUME_UP, VOLUME_DOWN, BRIGHTNESS_SET
 
             Rules:
             - Reply with just the intent word, nothing else
@@ -85,6 +86,39 @@ class Brain:
         except Exception as e:
             print(f"Extraction Error: {e}")
             return query
+        
+    def extract_number(self, query, intent):
+        try:
+            extract_prompt = f"""
+            Extract only the number out of the query.
+            Return just the subject, nothing else, no punctuation.
+
+            Examples:
+            'Increase the volume by 10' -> '10'
+            'Decrease the brighteness by 20' -> '20'
+
+            Query: {query}
+            Intent: {intent}
+            """
+
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": extract_prompt}
+                ],
+                temperature=0,
+                max_tokens=20
+            )
+
+            subject = response.choices[0].message.content.strip()
+            
+            print(f"--- Value Extracted: {subject} ---")
+            
+            return int(subject)
+
+        except Exception as e:
+            print(f"Extraction Error: {e}")
+            return None
 
     def ask(self, user_input):
         # Add user message to history
