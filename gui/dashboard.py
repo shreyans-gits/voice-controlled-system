@@ -1,5 +1,7 @@
 import customtkinter as ctk
 import random
+import pystray
+from PIL import Image
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -15,6 +17,7 @@ class Dashboard(ctk.CTk):
         self.geometry("500x500")
         self.configure(fg_color = "#0a0a0f")
         self.resizable(False, False)
+        self.protocol("WM_DELETE_WINDOW", self.hide_window)
 
         self.my_label = ctk.CTkLabel(self, text="N.O.V.A.", font=("CUFEL", 64), text_color=("#00d4ff"))
         self.my_label.pack(pady=5)
@@ -75,6 +78,22 @@ class Dashboard(ctk.CTk):
         self.bind("<Button-1>", self.start_move)
         self.bind("<ButtonRelease-1>", self.stop_move)
         self.bind("<B1-Motion>", self.on_move)
+        self.setup_tray()
+
+    def hide_window(self):
+        self.withdraw()
+        self.tray_icon.visible = True
+
+    def show_window(self):
+        self.deiconify()
+
+    def setup_tray(self):
+        icon_image = Image.open("Images/NOVA_High.png")
+        menu = pystray.Menu(
+            pystray.MenuItem("Open NOVA", self.show_window),
+        )
+        self.tray_icon = pystray.Icon("NOVA", icon_image, "NOVA Assistant", menu)
+        self.tray_icon.run_detached()
     
     def add_message(self, sender, text):
         self.textbox.configure(state="normal")
