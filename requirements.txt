@@ -1,0 +1,33 @@
+# NOVA — Requirements
+# Install with: pip install -r requirements.txt
+
+# AI
+groq
+google-generativeai
+
+# Voice
+SpeechRecognition
+edge-tts
+pygame
+PyAudio
+
+# GUI
+customtkinter
+pillow
+pystray
+
+# Modules
+requests
+wikipedia
+spotipy
+pywhatkit
+psutil
+plyer
+PyPDF2
+pyperclip
+screen-brightness-control
+pycaw
+comtypes
+
+# Config
+python-dotenv
