@@ -12,7 +12,7 @@ from modules.study import StudyModule
 from modules.screen_reader import ScreenReaderModule
 from modules.app_launcher import AppLauncherModule
 from modules.clipboard import Clipboard
-# from modules.system_control import SystemControlModule
+from modules.system_control import SystemControlModule
 from modules.voice_note import VoiceNoteModule
 
 from core.memory import Memory
@@ -49,7 +49,7 @@ def main(dashboard,message_queue,input_queue):
     screen = ScreenReaderModule()
     launcher = AppLauncherModule()
     clipboard = Clipboard()
-    # systemControl = SystemControlModule()
+    systemControl = SystemControlModule()
     voice_note = VoiceNoteModule()
 
     def reminder_checker():
@@ -322,32 +322,32 @@ def main(dashboard,message_queue,input_queue):
                 voice.speak(result)
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
-            # elif intent == "VOLUME_UP":
-            #     message_queue.put({"type": "status", "value": "THINKING"})
-            #     value = brain.extract_number(query, intent)
-            #     result = systemControl.volume_up(value if value else 10)
-            #     message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-            #     message_queue.put({"type": "status", "value": "SPEAKING"})
-            #     voice.speak(result)
-            #     message_queue.put({"type": "status", "value": "LISTENING"})
+            elif intent == "VOLUME_UP":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                value = brain.extract_number(query, intent)
+                result = systemControl.volume_up(value if value else 10)
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
 
-            # elif intent == "VOLUME_DOWN":
-            #     message_queue.put({"type": "status", "value": "THINKING"})
-            #     value = brain.extract_number(query, intent)
-            #     result = systemControl.volume_up(value if value else 10)
-            #     message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-            #     message_queue.put({"type": "status", "value": "SPEAKING"})
-            #     voice.speak(result)
-            #     message_queue.put({"type": "status", "value": "LISTENING"})
+            elif intent == "VOLUME_DOWN":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                value = brain.extract_number(query, intent)
+                result = systemControl.volume_down(value if value else 10)
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"})
 
-            # elif intent == "BRIGHTNESS_SET":
-            #     message_queue.put({"type": "status", "value": "THINKING"})
-            #     value = brain.extract_number(query, intent)
-            #     result = systemControl.volume_up(value if value else 70)
-            #     message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-            #     message_queue.put({"type": "status", "value": "SPEAKING"})
-            #     voice.speak(result)
-            #     message_queue.put({"type": "status", "value": "LISTENING"})    
+            elif intent == "BRIGHTNESS_SET":
+                message_queue.put({"type": "status", "value": "THINKING"})
+                value = brain.extract_number(query, intent)
+                result = systemControl.set_brightness(value if value else 70)
+                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(result)
+                message_queue.put({"type": "status", "value": "LISTENING"}) 
 
             elif intent == "NOTE_ADD":
                 message_queue.put({"type": "status", "value": "THINKING"})

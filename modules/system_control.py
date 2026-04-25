@@ -1,15 +1,16 @@
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import screen_brightness_control as sbc
-import os
 from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
+import comtypes
 
 class SystemControlModule:
     def __init__(self):
+        comtypes.CoInitialize()
         devices = AudioUtilities.GetSpeakers()
         interface = devices.Activate(
             IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-        self.volume = cast(interface, POINTER(IAudioEndpointVolume))  
+        self.volume = cast(interface, POINTER(IAudioEndpointVolume))
 
     def set_volume(self, level):
         level = max(0, min(100, level))
