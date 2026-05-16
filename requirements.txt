@@ -1,4 +1,4 @@
-# NOVA — Requirements
+# NOVA — Combined Requirements
 # Install with: pip install -r requirements.txt
 
 # AI
@@ -26,8 +26,26 @@ plyer
 PyPDF2
 pyperclip
 screen-brightness-control
-pycaw
+pycaw==20181226
 comtypes
 
 # Config
 python-dotenv
+
+# Skills — FaceLink
+cmake
+dlib
+face-recognition
+opencv-python
+numpy
+scikit-learn
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+
+# Skills — Gesture
+mediapipe
+pyautogui
+
+# Skills — Model Gen
+# (uses google-api-python-client already listed above)

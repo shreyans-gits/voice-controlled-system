@@ -9,3 +9,5 @@ PyWhatKit_DB.txt
 *.cache
 memory.json
 notes.json
+data/
+venv/
