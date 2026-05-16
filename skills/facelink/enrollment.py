@@ -1,20 +1,23 @@
 import cv2
 import pickle
 import os
-from detector import Detector
-from embedder import Embedder
+from skills.facelink.detector import Detector
+from skills.facelink.embedder import Embedder
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DB_PATH = os.path.join(BASE_DIR, "data", "enrolled_faces.pkl")
 
 class Enrollment:
     def __init__(self):
         self.detector = Detector()
         self.embedder = Embedder()
 
-    def save_enrolled(self, db, file_path="enrolled_faces.pkl"):
+    def save_enrolled(self, db, file_path="data/enrolled_faces.pkl"):
         with open(file_path, "wb") as f:
             pickle.dump(db, f)
         print(f"Database saved to {file_path}")
 
-    def load_enrolled(self, file_path="enrolled_faces.pkl"):
+    def load_enrolled(self, file_path="data/enrolled_faces.pkl"):
         if not os.path.exists(file_path):
             return {}
         with open(file_path, "rb") as f:
