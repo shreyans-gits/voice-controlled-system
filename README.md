@@ -5,6 +5,14 @@
 
 ---
 
+## UPDATING
+Currently integrating new features made in other repositories
+> Facelink(Face Recognition) : https://github.com/shreyans-gits/facelink
+> Hand-Gesture-Detection(Hand Detection and Webcam Voxel Editor) : https://github.com/shreyans-gits/hand-gesture-detection
+> 3D-Model-Generation (Using Shap-e to generate .obj models) : https://github.com/shreyans-gits/shape-e-model-generator
+
+---
+
 ## What is NOVA?
 
 NOVA is a personal AI desktop assistant that runs entirely on your machine. It uses Groq's free API for lightning-fast AI responses, Microsoft Neural voices for natural speech output, and a clean CustomTkinter GUI. It remembers you across sessions, controls your system, reads your screen, and gets smarter the more you use it.
