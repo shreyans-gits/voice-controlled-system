@@ -5,6 +5,8 @@ import math
 from HandTracker import INDEX, GestureTracker
 from tkinter import Tk, filedialog
 from cubeeditor import CubeEditor
+# import trimesh  # type: ignore
+# import fast_simplification  # type: ignore
 
 class Shapes3D:
     def __init__(self, screenW, screenH):
@@ -12,9 +14,8 @@ class Shapes3D:
         self.screenH = screenH
 
         self.model = None
-        self.vertices = []   # [(x,y,z), ...]
-        self.edges = []      # [(i,j), ...]
-
+        self.vertices = []
+        self.edges = []
         self.angleX = 0
         self.angleY = 0
         self.scale = 50
@@ -24,10 +25,19 @@ class Shapes3D:
 
         self.prevHandPos = None
         self.prevDist = None
+        self.prevMovePos = None
         self.currentSubOption = -1
         self.cubeeditor = CubeEditor(screenW, screenH)
 
     def loadModel(self, filepath):
+        if filepath.lower().endswith('.json'):
+            self.loadBlockbenchJson(filepath)
+        elif filepath.lower().endswith('.obj'):
+            self.loadObjMesh(filepath)
+            
+        self.centerModel()
+
+    def loadBlockbenchJson(self, filepath):
         with open(filepath, 'r') as f:
             self.model = json.load(f)
 
@@ -38,47 +48,85 @@ class Shapes3D:
             x1, y1, z1 = element["from"]
             x2, y2, z2 = element["to"]
 
-            # 8 corners
             corners = [
                 (x1,y1,z1),(x2,y1,z1),(x1,y2,z1),(x2,y2,z1),
                 (x1,y1,z2),(x2,y1,z2),(x1,y2,z2),(x2,y2,z2)
             ]
 
-            # Apply element rotation if exists
             if "rotation" in element:
                 rot = element["rotation"]
                 angle = math.radians(rot["angle"])
                 axis = rot["axis"]
                 ox, oy, oz = rot["origin"]
-
                 corners = [self.rotatePoint(p, angle, axis, (ox,oy,oz)) for p in corners]
 
             startIndex = len(self.vertices)
             self.vertices.extend(corners)
 
-            # 12 edges of cube
             box_edges = [
                 (0,1),(1,3),(3,2),(2,0),
                 (4,5),(5,7),(7,6),(6,4),
                 (0,4),(1,5),(2,6),(3,7)
             ]
-
             for e in box_edges:
                 self.edges.append((startIndex+e[0], startIndex+e[1]))
 
-        self.centerModel()
+    def loadObjMesh(self, filepath):
+        import trimesh  # type: ignore
+        import fast_simplification  # type: ignore
+
+        # 1. Load original asset
+        mesh = trimesh.load(filepath)
+        
+        raw_vertices = np.array(mesh.vertices, dtype=np.float32)
+        raw_faces = np.array(mesh.faces, dtype=np.int32)
+        
+        total_original_faces = len(raw_faces)
+        print(f"Loaded model containing {total_original_faces} original faces.")
+
+        TARGET_FACES = 1200 
+        if total_original_faces > TARGET_FACES:
+            target_reduction = 1.0 - (TARGET_FACES / total_original_faces)
+            target_reduction = max(0.0, min(target_reduction, 0.999))
+            print(f"Asset density exceeds CPU safety limit. Dynamically reducing by {target_reduction * 100:.2f}%.")
+            
+            simplified_vertices, simplified_faces = fast_simplification.simplify(
+                raw_vertices, 
+                raw_faces, 
+                target_reduction=target_reduction
+            )
+        else:
+            print("Asset is lightweight. Skipping decimation to retain maximum detail.")
+            simplified_vertices = raw_vertices
+            simplified_faces = raw_faces
+
+        print(f"Rendering loop active with {len(simplified_faces)} final wireframe faces.")
+
+        self.vertices = [tuple(v) for v in simplified_vertices]
+        self.edges = []
+        unique_edges = set()
+
+        for face in simplified_faces:
+            num_v = len(face)
+            for i in range(num_v):
+                v1 = face[i]
+                v2 = face[(i + 1) % num_v]
+                edge_pair = (min(v1, v2), max(v1, v2))
+                if edge_pair not in unique_edges:
+                    unique_edges.add(edge_pair)
+                    self.edges.append(edge_pair)
 
     def centerModel(self):
+        if not self.vertices:
+            return
         verts = np.array(self.vertices)
         center = verts.mean(axis=0)
-
         self.vertices = [tuple(v - center) for v in verts]
 
     def rotatePoint(self, point, angle, axis, origin):
         x,y,z = point
         ox,oy,oz = origin
 
-        # translate to origin
         x -= ox; y -= oy; z -= oz
 
         if axis == "x":
@@ -88,7 +136,6 @@ class Shapes3D:
         elif axis == "z":
             x,y = x*np.cos(angle)-y*np.sin(angle), x*np.sin(angle)+y*np.cos(angle)
 
-        # translate back
         return (x+ox, y+oy, z+oz)
 
     def getRotationX(self, angle):
@@ -107,15 +154,9 @@ class Shapes3D:
 
     def project(self, point):
         p = np.array(point)
-
-        # global rotation
         p = self.getRotationY(self.angleY) @ p
         p = self.getRotationX(self.angleX) @ p
-
-        # scale
         p = p * self.scale
-
-        # convert to 2D
         x = int(p[0] + self.centerX)
         y = int(-p[1] + self.centerY)
 
@@ -123,11 +164,11 @@ class Shapes3D:
     
     def openFileDialog(self):
         root = Tk()
-        root.withdraw()  # hides empty tkinter window
+        root.withdraw()
 
         filepath = filedialog.askopenfilename(
-            title="Select Blockbench JSON Model",
-            filetypes=[("JSON files", "*.json")]
+            title="Select 3D Asset File (.json / .obj)",
+            filetypes=[("3D Files", "*.json *.obj"), ("Blockbench JSON", "*.json"), ("Wavefront OBJ", "*.obj")]
         )
 
         root.destroy()
@@ -153,8 +194,8 @@ class Shapes3D:
             self.edges = []
 
             radius = 1
-            stacks = 12   # vertical divisions
-            slices = 24   # horizontal divisions
+            stacks = 12
+            slices = 24
 
             for i in range(stacks + 1):
                 theta = np.pi * i / stacks
@@ -185,7 +226,7 @@ class Shapes3D:
 
             if filepath:
                 self.loadModel(filepath)
-                self.scale = 20   # optional: make visible immediately
+                self.scale = 20
 
         if rightHand and rightHand.isFingerUp(INDEX) and sum(rightHand.fingersUp()) == 1 and not rightHand.isPinching():
             cx, cy = rightHand.center()
@@ -219,7 +260,6 @@ class Shapes3D:
 
             dist = math.hypot(cx2-cx1, cy2-cy1)
 
-            # scaling
             if self.prevDist:
                 self.scale += (dist - self.prevDist) * 0.01
                 self.scale = max(2, min(self.scale, 200))
