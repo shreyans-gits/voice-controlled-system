@@ -38,7 +38,9 @@ def main():
         
     job_id = sanitized_prompt
     
-    output_dir = "outputs"
+    CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+    
+    output_dir = os.path.join(CURRENT_DIR, "outputs")
     output_filename = f"{job_id}.{args.format}"
     local_path = os.path.join(output_dir, output_filename)
     
