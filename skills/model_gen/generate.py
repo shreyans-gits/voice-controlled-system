@@ -1,6 +1,6 @@
 import argparse
 import os
-import uuid
+import re
 import drive_client
 
 def main():
@@ -30,7 +30,13 @@ def main():
     )
     
     args = parser.parse_args()
-    job_id = str(uuid.uuid4())[:8]
+    
+    sanitized_prompt = re.sub(r'[^a-z0-9_]', '', args.prompt.lower().replace(' ', '_'))
+    
+    if not sanitized_prompt:
+        sanitized_prompt = "generated_asset"
+        
+    job_id = sanitized_prompt
     
     output_dir = "outputs"
     output_filename = f"{job_id}.{args.format}"
@@ -51,7 +57,7 @@ def main():
             service=service, 
             job_id=job_id, 
             timeout=args.timeout,
-            format = args.format
+            format=args.format
         )
         
         drive_file_id = remote_file_metadata.get('id')        
