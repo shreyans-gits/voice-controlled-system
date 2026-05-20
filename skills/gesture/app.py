@@ -133,15 +133,21 @@ while True:
             cx, cy = cursor
             cv2.circle(img, (cx, cy), 10, (0, 255, 255), cv2.FILLED)
             panelStartX = (SCREEN_W - 960) // 2
+            
+            button_hovered = False
             for i, (x1, y1, x2, y2) in enumerate(subButtonRects[currentMode]):
                 if (x1 + panelStartX) < cx < (x2 + panelStartX) and y1 < cy < y2:
                     hoveredSubBtn = i
+                    button_hovered = True
                     if subHoverTracker.detectHover(rightHand):
                         currentSubOption = i
                         subPanelOpen = False
                         notification = f"Selected: {subOptionsNames[currentMode][i]}"
                         notificationTimer = time.time()
                     break
+            
+            if not button_hovered:
+                subHoverTracker.detectHover(None)
 
     if notification and time.time() - notificationTimer < 1.5:
         img = drawText(img, notification, (SCREEN_W // 2, 30), FONT_PATH, 36)
