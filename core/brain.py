@@ -28,7 +28,8 @@ class Brain:
             SUMMARIZE, FLASHCARD, CONVERSATION, SCREEN_READ, SCREEN_EXPLAIN, SCREEN_SUMMARIZE, APP_OPEN, 
             CLIPBOARD_EXPLAIN, CLIPBOARD_TRANSLATE,
             VOLUME_UP, VOLUME_DOWN, BRIGHTNESS_SET,
-            NOTE_ADD, NOTE_READ, NOTE_CLEAR, SETTINGS
+            NOTE_ADD, NOTE_READ, NOTE_CLEAR, SETTINGS, 
+            WHITEBOARD, VOXEL_EDITOR, VIEW_MODEL, GENERATE_MODEL, DETECT_FACE
 
             Rules:
             - Reply with just the intent word, nothing else
@@ -64,6 +65,8 @@ class Brain:
             'search images of India' -> 'images of India'
             'learn about Indian history' -> 'Indian history'
             'put on some Drake' -> 'Drake'
+            'generate a 3D model of a vintage car' -> 'a vintage car'
+            'create a 3D fire hydrant' -> 'a fire hydrant'
 
             Query: {query}
             Intent: {intent}
