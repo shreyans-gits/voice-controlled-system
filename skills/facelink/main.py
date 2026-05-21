@@ -2,7 +2,7 @@ import os
 import sys
 import types
 
-venv_site = r"e:\ek-gits\Facelink\venv\Lib\site-packages"
+venv_site = r"e:\ek-gits\NOVA\venv\Lib\site-packages"
 m_dir = os.path.join(venv_site, "face_recognition_models", "models")
 m = types.ModuleType("face_recognition_models")
 m.pose_predictor_model_location = lambda: os.path.join(m_dir, "shape_predictor_68_face_landmarks.dat")
