@@ -47,3 +47,10 @@ SPOTIFY_URI = spotify_uri
 
 # GEMINI
 GEMINI_KEY = gemini_api_key
+
+#FACELINK
+import os
+
+ENROLLED_DIR = os.path.join("data", "enrolled")
+SIMILARITY_THRESHOLD = 0.6
+EMBEDDING_SIZE = 128
