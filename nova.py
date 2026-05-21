@@ -1,3 +1,24 @@
+import datetime
+import time
+import threading
+from plyer import notification
+import queue
+import os
+
+import sys
+import types
+
+venv_site = r"e:\ek-gits\NOVA\venv\Lib\site-packages"
+m_dir = os.path.join(venv_site, "face_recognition_models", "models")
+m = types.ModuleType("face_recognition_models")
+m.pose_predictor_model_location = lambda: os.path.join(m_dir, "shape_predictor_68_face_landmarks.dat")
+m.pose_predictor_five_point_model_location = lambda: os.path.join(m_dir, "shape_predictor_5_face_landmarks.dat")
+m.face_recognition_model_location = lambda: os.path.join(m_dir, "dlib_face_recognition_resnet_model_v1.dat")
+m.cnn_face_detector_model_location = lambda: os.path.join(m_dir, "mmod_human_face_detector.dat")
+sys.modules["face_recognition_models"] = m
+
+print("Successfully spoofed face_recognition_models.")
+
 from core.brain import Brain
 from core.voice import Voice
 import config
@@ -15,16 +36,15 @@ from modules.clipboard import Clipboard
 from modules.system_control import SystemControlModule
 from modules.voice_note import VoiceNoteModule
 
+from skills.gesture.gesture import GestureModule
+from skills.facelink.facelink import FaceLink
+from skills.model_gen.model_gen import ModelGenModule
+
 from core.memory import Memory
 
 from gui.dashboard import Dashboard
 from gui.settings import SettingsWindow
 
-import datetime
-import time
-import threading
-from plyer import notification
-import queue
 
 def greet():
     hour = datetime.datetime.now().hour
@@ -52,6 +72,10 @@ def main(dashboard,message_queue,input_queue):
     clipboard = Clipboard()
     systemControl = SystemControlModule()
     voice_note = VoiceNoteModule()
+
+    gesture = GestureModule()
+    facelink = FaceLink()
+    model_gen = ModelGenModule()
 
     def reminder_checker():
         while True:
@@ -388,6 +412,78 @@ def main(dashboard,message_queue,input_queue):
             elif intent == "SETTINGS":
                 message_queue.put({"type": "status", "value": "THINKING"})
                 dashboard.after(0, lambda: SettingsWindow(memory, voice_note, config))
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "WHITEBOARD":
+                msg = "Launching 3D Voxel spatial environment."
+                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(msg)
+                gesture.open_voxel_editor()
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "VIEW_MODEL":
+                subject = brain.extract_subject(query, intent)
+                expected_filename = f"{subject.lower().replace(' ', '_')}.obj"
+                local_path = os.path.abspath(os.path.join("data", "outputs", expected_filename))
+                if os.path.exists(local_path):
+                    msg = f"Opening local 3D file structure for {subject}."
+                    message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+                    message_queue.put({"type": "status", "value": "SPEAKING"})
+                    voice.speak(msg)
+                    gesture.open_model(local_path)
+                else:
+                    msg = f"I could not locate a pre-cached local 3D file for {subject}."
+                    message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+                    message_queue.put({"type": "status", "value": "SPEAKING"})
+                    voice.speak(msg)
+                    gesture.open_sphere()
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "GENERATE_MODEL":
+                subject = brain.extract_subject(query, intent)
+                msg = f"Submitting job generation token for {subject} to Shape-E cloud pipeline."
+                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(msg)
+                message_queue.put({"type": "status", "value": "THINKING"})
+                
+                try:
+                    downloaded_file = model_gen.generate(subject)
+                    msg_success = f"Mesh asset created successfully. Initializing tracking matrix."
+                    message_queue.put({"type": "message", "sender": "NOVA", "text": msg_success})
+                    message_queue.put({"type": "status", "value": "SPEAKING"})
+                    voice.speak(msg_success)
+                    gesture.open_model(downloaded_file)
+                except TimeoutError as te:
+                    msg_err = "The 3D generation request timed out. Please verify your remote Google Colab runtime session."
+                    message_queue.put({"type": "message", "sender": "NOVA", "text": msg_err})
+                    message_queue.put({"type": "status", "value": "SPEAKING"})
+                    voice.speak(msg_err)
+                except Exception as e:
+                    msg_err = "An internal processing exception halted the mesh asset workflow."
+                    message_queue.put({"type": "message", "sender": "NOVA", "text": msg_err})
+                    message_queue.put({"type": "status", "value": "SPEAKING"})
+                    voice.speak(msg_err)
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "DETECT_FACE":
+                msg = "Activating camera frame recognition layers."
+                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(msg)
+                message_queue.put({"type": "status", "value": "THINKING"})
+                
+                identities = facelink.identify()
+                if isinstance(identities, list):
+                    matches_str = ", ".join(identities)
+                    msg_res = f"I recognize the following face outlines on the video sensor: {matches_str}."
+                else:
+                    msg_res = f"Face detection status update: {identities}."
+                    
+                message_queue.put({"type": "message", "sender": "NOVA", "text": msg_res})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(msg_res)
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
             elif intent == "CONVERSATION":
