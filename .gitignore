@@ -12,3 +12,7 @@ notes.json
 data/
 venv/
 skills/gesture/hand_landmarker.task
+skills/model_gen/service_account.json
+skills/model_gen/token.json
+skills/model_gen/two.json
+token.json
