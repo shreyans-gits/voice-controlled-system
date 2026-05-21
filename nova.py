@@ -415,6 +415,14 @@ def main(dashboard,message_queue,input_queue):
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
             elif intent == "WHITEBOARD":
+                msg = "Opening hand tracking whiteboard canvas."
+                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+                message_queue.put({"type": "status", "value": "SPEAKING"})
+                voice.speak(msg)
+                gesture.open_whiteboard()
+                message_queue.put({"type": "status", "value": "LISTENING"})
+
+            elif intent == "VOXEL_EDITOR":
                 msg = "Launching 3D Voxel spatial environment."
                 message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
                 message_queue.put({"type": "status", "value": "SPEAKING"})
@@ -424,20 +432,30 @@ def main(dashboard,message_queue,input_queue):
 
             elif intent == "VIEW_MODEL":
                 subject = brain.extract_subject(query, intent)
-                expected_filename = f"{subject.lower().replace(' ', '_')}.obj"
+                clean_subject = subject.lower().replace("model", "").replace("3d", "").strip()
+                if not clean_subject:
+                    clean_subject = "generated_asset"
+                    
+                expected_filename = f"{clean_subject.replace(' ', '_')}.obj"
+                
                 local_path = os.path.abspath(os.path.join("data", "outputs", expected_filename))
-                if os.path.exists(local_path):
-                    msg = f"Opening local 3D file structure for {subject}."
+                alt_path = os.path.abspath(os.path.join("skills", "model_gen", "outputs", expected_filename))
+                
+                target_path = local_path if os.path.exists(local_path) else alt_path
+                
+                if os.path.exists(target_path):
+                    msg = f"Opening local 3D file structure for {clean_subject}."
                     message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
                     message_queue.put({"type": "status", "value": "SPEAKING"})
                     voice.speak(msg)
-                    gesture.open_model(local_path)
+                    gesture.open_model(target_path)
                 else:
-                    msg = f"I could not locate a pre-cached local 3D file for {subject}."
+                    msg = f"I could not locate a pre-cached file for {clean_subject}. Opening the default 3D canvas instead."
                     message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
                     message_queue.put({"type": "status", "value": "SPEAKING"})
                     voice.speak(msg)
                     gesture.open_sphere()
+                    
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
             elif intent == "GENERATE_MODEL":
