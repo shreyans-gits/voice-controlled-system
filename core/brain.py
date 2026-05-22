@@ -54,6 +54,70 @@ class Brain:
             print(f"Intent Error: {e}")
             return "CONVERSATION"
         
+    def get_intents(self, query):
+        import json
+        try:
+            intents_prompt = f"""
+            You are an expert multi-intent semantic parsing engine. Your job is to break down a user's desktop assistant query into a structured JSON array of execution steps.
+
+            Valid Intent List:
+            WEATHER, BATTERY, CPU, RAM, SEARCH, WATCH, WIKIPEDIA, NEWS, REMINDER, 
+            WHATSAPP, SPOTIFY_PLAY, SPOTIFY_PAUSE, SPOTIFY_SKIP, POMODORO, 
+            SUMMARIZE, FLASHCARD, CONVERSATION, SCREEN_READ, SCREEN_EXPLAIN, SCREEN_SUMMARIZE, APP_OPEN, 
+            CLIPBOARD_EXPLAIN, CLIPBOARD_TRANSLATE, VOLUME_UP, VOLUME_DOWN, BRIGHTNESS_SET,
+            NOTE_ADD, NOTE_READ, NOTE_CLEAR, SETTINGS, WHITEBOARD, VOXEL_EDITOR, VIEW_MODEL, GENERATE_MODEL, DETECT_FACE
+
+            Structural Rules:
+            1. Return a raw, clean JSON array of objects. Do not include markdown code blocks, do not wrap in ```json, do not write explanations. Just the raw text array.
+            2. Max 3 intents per query.
+            3. If a query only represents a single intent, still return a list containing exactly one object.
+            4. If a query does not match any specific hardware, tool, or action intent, classify it as CONVERSATION.
+
+            Dependency & Subject Rules:
+            - "subject": Extract the target entity or prompt payload if applicable (e.g., "a fire hydrant", "Drake", "Indian history"), otherwise null.
+            - "depends_on": Set this to null if the intent can run instantly on its own. If intent B requires the output or completion of intent A (e.g., VIEW_MODEL needs the file created by GENERATE_MODEL), set "depends_on" to intent A's string name.
+
+            Output Examples:
+            Query: "check my cpu and tell me the weather"
+            [
+              {{"intent": "CPU", "depends_on": null, "subject": null}},
+              {{"intent": "WEATHER", "depends_on": null, "subject": null}}
+            ]
+
+            Query: "generate a 3d model of a castle and then open it up"
+            [
+              {{"intent": "GENERATE_MODEL", "depends_on": null, "subject": "castle"}},
+              {{"intent": "VIEW_MODEL", "depends_on": "GENERATE_MODEL", "subject": "castle"}}
+            ]
+
+            Query: {query}
+            """
+
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": intents_prompt}
+                ],
+                temperature=0,
+                max_tokens=150
+            )
+            raw_content = response.choices[0].message.content.strip()
+            if raw_content.startswith("```"):
+                raw_content = raw_content.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+            if raw_content.startswith("json"):
+                raw_content = raw_content.split("json", 1)[1].strip()
+
+            intent_list = json.loads(raw_content)
+            print(f"--- Multi-Intent Graph Parsed ---\n{json.dumps(intent_list, indent=2)}\n---------------------------------")
+            return intent_list
+        
+        except Exception as e:
+            print(f"Multi-Intent Parsing Error: {e}")
+            fallback_intent = self.get_intent(query)
+            return [{"intent": fallback_intent, "depends_on": None, "subject": None}]
+
+
+        
     def extract_subject(self, query, intent):
         try:
             extract_prompt = f"""
