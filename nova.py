@@ -54,6 +54,69 @@ def greet():
         return f"Good afternoon {config.USER_NAME}. NOVA online."
     else:
         return f"Good evening {config.USER_NAME}. NOVA online."
+    
+# --- MULTI-INTENT HANDLER ENGINE ---
+def handle_weather(query, context, weather, message_queue, voice):
+    weather_data = weather.getWeather()
+    message_queue.put({"type": "message", "sender": "NOVA", "text": weather_data})
+    message_queue.put({"type": "status", "value": "SPEAKING"})
+    voice.speak(weather_data)
+    context.set_result(weather_data)
+    return weather_data
+
+
+def handle_generate_model(query, context, brain, model_gen, message_queue, voice):
+    subject = brain.extract_subject(query, "GENERATE_MODEL")
+    msg = f"Submitting job generation token for {subject} to Shape-E cloud pipeline."
+    message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+    message_queue.put({"type": "status", "value": "SPEAKING"})
+    voice.speak(msg)
+    message_queue.put({"type": "status", "value": "THINKING"})
+    
+    try:
+        downloaded_file = model_gen.generate(subject)
+        context.set_result(downloaded_file)
+        return downloaded_file
+    except TimeoutError:
+        msg_err = "The 3D generation request timed out. Please verify your remote Google Colab runtime session."
+        message_queue.put({"type": "message", "sender": "NOVA", "text": msg_err})
+        message_queue.put({"type": "status", "value": "SPEAKING"})
+        voice.speak(msg_err)
+        context.set_result(None)
+    except Exception as e:
+        msg_err = f"An internal processing exception halted the mesh asset workflow: {e}"
+        message_queue.put({"type": "message", "sender": "NOVA", "text": msg_err})
+        message_queue.put({"type": "status", "value": "SPEAKING"})
+        voice.speak(msg_err)
+        context.set_result(None)
+
+
+def handle_view_model(query, context, brain, gesture, message_queue, voice):
+    local_path = context.get_result()    
+    if not local_path or not os.path.exists(str(local_path)):
+        subject = brain.extract_subject(query, "VIEW_MODEL")
+        clean_subject = subject.lower().replace("model", "").replace("3d", "").strip()
+        if not clean_subject:
+            clean_subject = "generated_asset"
+            
+        expected_filename = f"{clean_subject.replace(' ', '_')}.obj"
+        path_a = os.path.abspath(os.path.join("data", "outputs", expected_filename))
+        path_b = os.path.abspath(os.path.join("skills", "model_gen", "outputs", expected_filename))
+        local_path = path_a if os.path.exists(path_a) else path_b
+
+    if os.path.exists(str(local_path)):
+        asset_name = os.path.basename(str(local_path)).replace(".obj", "").replace("_", " ")
+        msg = f"Opening local 3D file structure for {asset_name}."
+        message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+        message_queue.put({"type": "status", "value": "SPEAKING"})
+        voice.speak(msg)
+        gesture.open_model(local_path)
+    else:
+        msg = "I could not locate a pre-cached 3D file asset. Opening the default 3D canvas instead."
+        message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+        message_queue.put({"type": "status", "value": "SPEAKING"})
+        voice.speak(msg)
+        gesture.open_sphere()
 
 def main(dashboard,message_queue,input_queue):
     memory = Memory()
