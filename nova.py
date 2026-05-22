@@ -224,25 +224,38 @@ def handle_reminder(query, reminder, voice, message_queue):
     voice.speak(res)
 
 
-def handle_whatsapp(query, wp, voice, message_queue):
-    message_queue.put({"type": "message", "sender": "NOVA", "text": "What is your message?"})
-    message_queue.put({"type": "status", "value": "SPEAKING"})
-    voice.speak("What is your message?")
-    message_queue.put({"type": "status", "value": "LISTENING"})
-    message = voice.listen()
-    message_queue.put({"type": "message", "sender": "You", "text": message})
+def handle_whatsapp(query, wp, voice, message_queue, context, brain):
+    pre_loaded_message = context.get_result()
+    
+    if pre_loaded_message:
+        message = str(pre_loaded_message)
+    else:
+        message_queue.put({"type": "message", "sender": "NOVA", "text": "What is your message?"})
+        message_queue.put({"type": "status", "value": "SPEAKING"})
+        voice.speak("What is your message?")
+        message_queue.put({"type": "status", "value": "LISTENING"})
+        message = voice.listen()
+        message_queue.put({"type": "message", "sender": "You", "text": message})
+        
     message = message + "\n\n_- This message was sent to you by NOVA_"
-    message_queue.put({"type": "message", "sender": "NOVA", "text": "To whom do you want to send the message?"})
-    message_queue.put({"type": "status", "value": "SPEAKING"})
-    voice.speak("To whom do you want to send the message?")
-    message_queue.put({"type": "status", "value": "LISTENING"})
-    name = voice.listen().lower()
-    message_queue.put({"type": "message", "sender": "You", "text": name})
+    
+    subject = brain.extract_subject(query, "WHATSAPP") if "to" in query.lower() else ""
+    name = subject.lower().strip()
+    
+    if not name:
+        message_queue.put({"type": "message", "sender": "NOVA", "text": "To whom do you want to send the message?"})
+        message_queue.put({"type": "status", "value": "SPEAKING"})
+        voice.speak("To whom do you want to send the message?")
+        message_queue.put({"type": "status", "value": "LISTENING"})
+        name = voice.listen().lower()
+        message_queue.put({"type": "message", "sender": "You", "text": name})
+        
     number = config.CONTACTS.get(name, "+916363466319")
     if name not in config.CONTACTS:
         message_queue.put({"type": "message", "sender": "NOVA", "text": f"I couldn't find {name} in your contacts, so I'll send it to your default number."})
         message_queue.put({"type": "status", "value": "SPEAKING"})
         voice.speak(f"I couldn't find {name} in your contacts, so I'll send it to your default number.")
+        
     res = wp.send_message(number, message)
     message_queue.put({"type": "message", "sender": "NOVA", "text": res})
     message_queue.put({"type": "status", "value": "SPEAKING"})
@@ -306,14 +319,32 @@ def handle_vision_readers(intent_name, screen, message_queue, voice):
     message_queue.put({"type": "status", "value": "SPEAKING"})
     voice.speak(result)
 
+def handle_raw_clipboard_handoff(clipboard, message_queue, voice, context):
+    message_queue.put({"type": "status", "value": "THINKING"})
+    raw_text = clipboard.clipGet()
+    
+    if not raw_text or not raw_text.strip():
+        raw_text = "Empty clipboard content."
+        
+    msg = "Raw clipboard data successfully retrieved and added to execution context."
+    message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+    message_queue.put({"type": "status", "value": "SPEAKING"})
+    voice.speak("Got your clipboard content.")
+    
+    context.set_result(raw_text)
+    return raw_text
 
-def handle_clipboard_skills(intent_name, clipboard, brain, message_queue, voice):
+def handle_clipboard_skills(intent_name, clipboard, brain, message_queue, voice, context):
     message_queue.put({"type": "status", "value": "THINKING"})
     raw_text = clipboard.explain() if intent_name == "CLIPBOARD_EXPLAIN" else clipboard.translate()
     result = brain.summary(raw_text)
+    
     message_queue.put({"type": "message", "sender": "NOVA", "text": result})
     message_queue.put({"type": "status", "value": "SPEAKING"})
     voice.speak(result)
+    
+    context.set_result(result)
+    return result
 
 
 def handle_hardware_control(intent_name, query, brain, systemControl, message_queue, voice):
@@ -464,7 +495,7 @@ def main(dashboard,message_queue,input_queue):
                 
                 "NEWS": lambda item, q, ctx: safe_speak(handle_news, news, message_queue, voice),
                 "REMINDER": lambda item, q, ctx: safe_speak(handle_reminder, q, reminder, voice, message_queue),
-                "WHATSAPP": lambda item, q, ctx: safe_speak(handle_whatsapp, q, wp, voice, message_queue),
+                "WHATSAPP": lambda item, q, ctx: safe_speak(handle_whatsapp, q, wp, voice, message_queue, ctx, brain),
                 
                 "SPOTIFY_PLAY": lambda item, q, ctx: safe_speak(handle_spotify, "SPOTIFY_PLAY", q, brain, spotify, message_queue, voice),
                 "SPOTIFY_PAUSE": lambda item, q, ctx: safe_speak(handle_spotify, "SPOTIFY_PAUSE", q, brain, spotify, message_queue, voice),
@@ -478,9 +509,10 @@ def main(dashboard,message_queue,input_queue):
                 "SCREEN_EXPLAIN": lambda item, q, ctx: safe_speak(handle_vision_readers, "SCREEN_EXPLAIN", screen, message_queue, voice),
                 "SCREEN_SUMMARIZE": lambda item, q, ctx: safe_speak(handle_vision_readers, "SCREEN_SUMMARIZE", screen, message_queue, voice),
                 
-                "CLIPBOARD_EXPLAIN": lambda item, q, ctx: safe_speak(handle_clipboard_skills, "CLIPBOARD_EXPLAIN", clipboard, brain, message_queue, voice),
-                "CLIPBOARD_TRANSLATE": lambda item, q, ctx: safe_speak(handle_clipboard_skills, "CLIPBOARD_TRANSLATE", clipboard, brain, message_queue, voice),
-                
+                "CLIPBOARD_EXPLAIN": lambda item, q, ctx: safe_speak(handle_clipboard_skills, "CLIPBOARD_EXPLAIN", clipboard, brain, message_queue, voice, ctx),
+                "CLIPBOARD_TRANSLATE": lambda item, q, ctx: safe_speak(handle_clipboard_skills, "CLIPBOARD_TRANSLATE", clipboard, brain, message_queue, voice, ctx),
+                "CLIPBOARD_GET": lambda item, q, ctx: safe_speak(handle_raw_clipboard_handoff, clipboard, message_queue, voice, ctx),
+
                 "VOLUME_UP": lambda item, q, ctx: safe_speak(handle_hardware_control, "VOLUME_UP", q, brain, systemControl, message_queue, voice),
                 "VOLUME_DOWN": lambda item, q, ctx: safe_speak(handle_hardware_control, "VOLUME_DOWN", q, brain, systemControl, message_queue, voice),
                 "BRIGHTNESS_SET": lambda item, q, ctx: safe_speak(handle_hardware_control, "BRIGHTNESS_SET", q, brain, systemControl, message_queue, voice),

@@ -31,6 +31,20 @@ class Clipboard:
             return "Couldn't access clipboard"
         
         return "Couldn't access clipboard"
+    
+    def clipGet(self):
+        try:
+            clipboard_image = ImageGrab.grabclipboard()
+            if clipboard_image:
+                return "Couldn't return an image"
+            text_content = pc.paste()
+            if text_content and text_content.strip():
+                return text_content
+        except Exception as e:
+            print(f"Clipboard error : {e}")
+            return "Couldn't access clipboard"
+        
+        return "Couldn't access clipboard"
 
     def translate(self):
         try:
