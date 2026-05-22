@@ -67,8 +67,11 @@ def handle_weather(query, context, weather, message_queue, voice):
     return weather_data
 
 
-def handle_generate_model(query, context, brain, model_gen, message_queue, voice):
-    subject = brain.extract_subject(query, "GENERATE_MODEL")
+def handle_generate_model(item, query, context, model_gen, message_queue, voice):
+    subject = item.get("subject")
+    if not subject or subject == "null":
+        subject = "generated_asset"
+        
     msg = f"Submitting job generation token for {subject} to Shape-E cloud pipeline."
     message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
     message_queue.put({"type": "status", "value": "SPEAKING"})
@@ -201,428 +204,302 @@ def main(dashboard,message_queue,input_queue):
             dashboard.after(0, dashboard.destroy)
             break
         else:
-            intent = brain.get_intent(query)
+            # FIXED: Removed the old intent/if-elif blocking block entirely!
+            # The query goes straight to the Multi-Intent Parsing & Thread Pool execution tree.
+            
+            intent_list = brain.get_intents(query)
+            context = IntentContext()
 
-            # if intent == "WEATHER":
-            #     message_queue.put({"type": "message", "sender": "NOVA", "text": weather.getWeather()})
-            #     message_queue.put({"type": "status", "value": "SPEAKING"})
-            #     voice.speak(weather.getWeather())
-            #     message_queue.put({"type": "status", "value": "LISTENING"})
+            # FIXED: Added item object to lambda signature to pass pre-extracted graph payload variables
+            INTENT_HANDLERS = {
+                "WEATHER": lambda item, q, ctx: handle_weather(q, ctx, weather, message_queue, voice),
+                "GENERATE_MODEL": lambda item, q, ctx: handle_generate_model(item, q, ctx, model_gen, message_queue, voice),
+                "VIEW_MODEL": lambda item, q, ctx: handle_view_model(q, ctx, brain, gesture, message_queue, voice),
+            }
 
-            if intent == "BATTERY":
-                message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_battery()})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(system.get_battery())
-                message_queue.put({"type": "status", "value": "LISTENING"})
-            elif intent == "CPU":
-                message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_cpu()})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(system.get_cpu())
-                message_queue.put({"type": "status", "value": "LISTENING"})
-            elif intent == "RAM":
-                message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_ram()})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(system.get_ram())
-                message_queue.put({"type": "status", "value": "LISTENING"})
+            independent = [i for i in intent_list if not i.get("depends_on")]
+            dependent = [i for i in intent_list if i.get("depends_on")]
 
-            elif intent == "SEARCH":
-                subject = brain.extract_subject(query, intent)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": f"Searching {subject}"})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(f"Searching {subject}")
-                message_queue.put({"type": "status", "value": "LISTENING"})
-                search.search(subject)
-            elif intent == "WATCH":
-                subject = brain.extract_subject(query, intent)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": f"Searching {subject} on YouTube"})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(f"Searching {subject} on YouTube")
-                message_queue.put({"type": "status", "value": "LISTENING"})
-                search.watch(subject)
-            elif intent == "WIKIPEDIA":
-                subject = brain.extract_subject(query, intent)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": "Searching Wikipedia..."})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak("Searching Wikipedia...")
-                message_queue.put({"type": "status", "value": "LISTENING"})
-                message_queue.put({"type": "message", "sender": "NOVA", "text": search.getWiki(subject)})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(search.getWiki(subject))
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "NEWS":
-                titles = news.get_news()
-                for i in titles:
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": i})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(i)
-                    message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "REMINDER":
-                message_queue.put({"type": "message", "sender": "NOVA", "text": "What should I remind you about?"})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak("What should I remind you about?")
-                message_queue.put({"type": "status", "value": "LISTENING"})
-                message = voice.listen()
-                message_queue.put({"type": "message", "sender": "You", "text": query})
-                message_queue.put({"type": "message", "sender": "NOVA", "text": "In how many minutes?"})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak("In how many minutes?")
-                message_queue.put({"type": "status", "value": "LISTENING"})
-                time_str = voice.listen()
-                message_queue.put({"type": "message", "sender": "You", "text": query})
-                message_queue.put({"type": "message", "sender": "NOVA", "text": reminder.set_reminder(time_str, message)})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(reminder.set_reminder(time_str, message))
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "WHATSAPP":
-                message_queue.put({"type": "message", "sender": "NOVA", "text": "What is your message?"})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak("What is your message?")
-                message_queue.put({"type": "status", "value": "LISTENING"})
-                message = voice.listen()
-                message_queue.put({"type": "message", "sender": "You", "text": message})
-                message = message + "\n\n_- This message was sent to you by NOVA_"
-                message_queue.put({"type": "message", "sender": "NOVA", "text": "To whom do you want to send the message?"})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak("To whom do you want to send the message?")
-                message_queue.put({"type": "status", "value": "LISTENING"})
-                name = voice.listen().lower()
-                message_queue.put({"type": "message", "sender": "You", "text": name})
-                number = config.CONTACTS.get(name, "+916363466319")
-                if name not in config.CONTACTS:
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": f"I couldn't find {name} in your contacts, so I'll send it to your default number."})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(f"I couldn't find {name} in your contacts, so I'll send it to your default number.")
-                    message_queue.put({"type": "status", "value": "LISTENING"})
-                message_queue.put({"type": "message", "sender": "NOVA", "text": wp.send_message(number,message)})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(wp.send_message(number,message))
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "SPOTIFY_PLAY":
-                subject = brain.extract_subject(query, intent)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": f"Searching for {subject} on Spotify"})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(f"Searching for {subject} on Spotify")
-                message_queue.put({"type": "status", "value": "LISTENING"})
-                result = spotify.play(subject)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-            elif intent == "SPOTIFY_PAUSE":
-                message_queue.put({"type": "message", "sender": "NOVA", "text": spotify.pause()})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(spotify.pause())
-                message_queue.put({"type": "status", "value": "LISTENING"})
-            elif intent == "SPOTIFY_SKIP":
-                message_queue.put({"type": "message", "sender": "NOVA", "text": spotify.next_track()})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(spotify.next_track())
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "POMODORO":
-                try:
-                    mins = int(query.split("for")[1].split()[0])
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": study.pomodoro(mins)})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(study.pomodoro(mins))
-                    message_queue.put({"type": "status", "value": "LISTENING"})
-                except:
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": study.pomodoro(25)})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(study.pomodoro(25))
-                    message_queue.put({"type": "status", "value": "LISTENING"})
-            elif intent == "SUMMARIZE":
-                summary_result = study.summarize_pdf() 
-                message_queue.put({"type": "message", "sender": "NOVA", "text": summary_result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(summary_result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-            elif intent == "FLASHCARD":
-                message_queue.put({"type": "message", "sender": "NOVA", "text": "Give name of the topic"})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak("Give name of the topic")
-                message_queue.put({"type": "status", "value": "LISTENING"})
-                topic = voice.listen().lower()
-                message_queue.put({"type": "message", "sender": "You", "text": query})
-                if topic:
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": f"Generating flashcards for {topic}. Just a moment."})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(f"Generating flashcards for {topic}. Just a moment.")
-                    message_queue.put({"type": "status", "value": "LISTENING"})
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": study.flashcard(topic)})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(study.flashcard(topic))
-                    message_queue.put({"type": "status", "value": "LISTENING"})
-                else:
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": "I didn't catch the topic. Please try again."})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak("I didn't catch the topic. Please try again.")
-                    message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "SCREEN_READ":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                result = screen.read("Describe everything on this screen")
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "SCREEN_EXPLAIN":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                result = screen.read("Explain what is happening on this screen in detail")
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "SCREEN_SUMMARIZE":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                result = screen.read("Summarize the main content on this screen")
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "APP_OPEN":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                subject = brain.extract_subject(query, intent)
-                result = launcher.launch_app(subject)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "CLIPBOARD_EXPLAIN":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                result = brain.summary(clipboard.explain())
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "CLIPBOARD_TRANSLATE":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                result = brain.summary(clipboard.translate())
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "VOLUME_UP":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                value = brain.extract_number(query, intent)
-                result = systemControl.volume_up(value if value else 10)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "VOLUME_DOWN":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                value = brain.extract_number(query, intent)
-                result = systemControl.volume_down(value if value else 10)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "BRIGHTNESS_SET":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                value = brain.extract_number(query, intent)
-                result = systemControl.set_brightness(value if value else 70)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"}) 
-
-            elif intent == "NOTE_ADD":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                text = brain.extract_subject(query, intent)
-                if text:
-                    result = voice_note.add_note(text)
-                else:
-                    result = "I didn't catch what you wanted me to note down."
-                    
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "NOTE_READ":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                raw_num = brain.extract_number(query, intent)
-                try:
-                    number = int(raw_num) if raw_num else 1
-                except ValueError:
-                    number = 1
-                    
-                result = voice_note.read_note(number)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "NOTE_CLEAR":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                result = voice_note.clear_notes()
-                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(result)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "SETTINGS":
-                message_queue.put({"type": "status", "value": "THINKING"})
-                dashboard.after(0, lambda: SettingsWindow(memory, voice_note, config))
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "WHITEBOARD":
-                msg = "Opening hand tracking whiteboard canvas."
-                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(msg)
-                gesture.open_whiteboard()
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "VOXEL_EDITOR":
-                msg = "Launching 3D Voxel spatial environment."
-                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(msg)
-                gesture.open_voxel_editor()
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            # elif intent == "VIEW_MODEL":
-            #     subject = brain.extract_subject(query, intent)
-            #     clean_subject = subject.lower().replace("model", "").replace("3d", "").strip()
-            #     if not clean_subject:
-            #         clean_subject = "generated_asset"
-                    
-            #     expected_filename = f"{clean_subject.replace(' ', '_')}.obj"
-                
-            #     local_path = os.path.abspath(os.path.join("data", "outputs", expected_filename))
-            #     alt_path = os.path.abspath(os.path.join("skills", "model_gen", "outputs", expected_filename))
-                
-            #     target_path = local_path if os.path.exists(local_path) else alt_path
-                
-            #     if os.path.exists(target_path):
-            #         msg = f"Opening local 3D file structure for {clean_subject}."
-            #         message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
-            #         message_queue.put({"type": "status", "value": "SPEAKING"})
-            #         voice.speak(msg)
-            #         gesture.open_model(target_path)
-            #     else:
-            #         msg = f"I could not locate a pre-cached file for {clean_subject}. Opening the default 3D canvas instead."
-            #         message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
-            #         message_queue.put({"type": "status", "value": "SPEAKING"})
-            #         voice.speak(msg)
-            #         gesture.open_sphere()
-                    
-            #     message_queue.put({"type": "status", "value": "LISTENING"})
-
-            # elif intent == "GENERATE_MODEL":
-            #     subject = brain.extract_subject(query, intent)
-            #     msg = f"Submitting job generation token for {subject} to Shape-E cloud pipeline."
-            #     message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
-            #     message_queue.put({"type": "status", "value": "SPEAKING"})
-            #     voice.speak(msg)
-            #     message_queue.put({"type": "status", "value": "THINKING"})
-                
-            #     try:
-            #         downloaded_file = model_gen.generate(subject)
-            #         msg_success = f"Mesh asset created successfully. Initializing tracking matrix."
-            #         message_queue.put({"type": "message", "sender": "NOVA", "text": msg_success})
-            #         message_queue.put({"type": "status", "value": "SPEAKING"})
-            #         voice.speak(msg_success)
-            #         gesture.open_model(downloaded_file)
-            #     except TimeoutError as te:
-            #         msg_err = "The 3D generation request timed out. Please verify your remote Google Colab runtime session."
-            #         message_queue.put({"type": "message", "sender": "NOVA", "text": msg_err})
-            #         message_queue.put({"type": "status", "value": "SPEAKING"})
-            #         voice.speak(msg_err)
-            #     except Exception as e:
-            #         msg_err = "An internal processing exception halted the mesh asset workflow."
-            #         message_queue.put({"type": "message", "sender": "NOVA", "text": msg_err})
-            #         message_queue.put({"type": "status", "value": "SPEAKING"})
-            #         voice.speak(msg_err)
-            #     message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "DETECT_FACE":
-                msg = "Activating camera frame recognition layers."
-                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(msg)
-                message_queue.put({"type": "status", "value": "THINKING"})
-                
-                identities = facelink.identify()
-                if isinstance(identities, list):
-                    matches_str = ", ".join(identities)
-                    msg_res = f"I recognize the following face outlines on the video sensor: {matches_str}."
-                else:
-                    msg_res = f"Face detection status update: {identities}."
-                    
-                message_queue.put({"type": "message", "sender": "NOVA", "text": msg_res})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(msg_res)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            elif intent == "CONVERSATION":
-                memory.log("Shreyans", query)
-                response = brain.ask(query)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": response})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(response)
-                memory.log("NOVA", response)
-                message_queue.put({"type": "status", "value": "LISTENING"})
-
-            else:
-                intent_list = brain.get_intents(query)
-                context = IntentContext()
-
-                INTENT_HANDLERS = {
-                    "WEATHER": lambda q, ctx: handle_weather(q, ctx, weather, message_queue, voice),
-                    "GENERATE_MODEL": lambda q, ctx: handle_generate_model(q, ctx, brain, model_gen, message_queue, voice),
-                    "VIEW_MODEL": lambda q, ctx: handle_view_model(q, ctx, brain, gesture, message_queue, voice),
-                }
-
-                independent = [i for i in intent_list if not i.get("depends_on")]
-                dependent = [i for i in intent_list if i.get("depends_on")]
-
-                if independent:
-                    with ThreadPoolExecutor() as executor:
-                        futures = {}
-                        for item in independent:
-                            intent_name = item["intent"]
+            if independent:
+                with ThreadPoolExecutor() as executor:
+                    futures = {}
+                    for item in independent:
+                        intent_name = item["intent"]
+                        
+                        if intent_name in INTENT_HANDLERS:
+                            # FIXED: Forward item dictionary down into the executor thread pool loop
+                            futures[intent_name] = executor.submit(INTENT_HANDLERS[intent_name], item, query, context)
+                        else:
+                            intent = intent_name
                             
-                            if intent_name in INTENT_HANDLERS:
-                                futures[intent_name] = executor.submit(INTENT_HANDLERS[intent_name], query, context)
-                            else:
-                                intent = intent_name
-                                
-                                if intent == "BATTERY":
-                                    message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_battery()})
+                            if intent == "BATTERY":
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_battery()})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(system.get_battery())
+
+                            elif intent == "CPU":
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_cpu()})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(system.get_cpu())
+
+                            elif intent == "RAM":
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_ram()})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(system.get_ram())
+
+                            elif intent == "SEARCH":
+                                subject = brain.extract_subject(query, intent)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": f"Searching {subject}"})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(f"Searching {subject}")
+                                search.search(subject)
+
+                            elif intent == "WATCH":
+                                subject = brain.extract_subject(query, intent)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": f"Searching {subject} on YouTube"})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(f"Searching {subject} on YouTube")
+                                search.watch(subject)
+
+                            elif intent == "WIKIPEDIA":
+                                subject = brain.extract_subject(query, intent)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": "Searching Wikipedia..."})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak("Searching Wikipedia...")
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": search.getWiki(subject)})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(search.getWiki(subject))
+
+                            elif intent == "NEWS":
+                                titles = news.get_news()
+                                for i in titles:
+                                    message_queue.put({"type": "message", "sender": "NOVA", "text": i})
                                     message_queue.put({"type": "status", "value": "SPEAKING"})
-                                    voice.speak(system.get_battery())
-                                elif intent == "CPU":
-                                    message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_cpu()})
+                                    voice.speak(i)
+
+                            elif intent == "REMINDER":
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": "What should I remind you about?"})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak("What should I remind you about?")
+                                message_queue.put({"type": "status", "value": "LISTENING"})
+                                message = voice.listen()
+                                message_queue.put({"type": "message", "sender": "You", "text": query})
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": "In how many minutes?"})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak("In how many minutes?")
+                                message_queue.put({"type": "status", "value": "LISTENING"})
+                                time_str = voice.listen()
+                                message_queue.put({"type": "message", "sender": "You", "text": query})
+                                res = reminder.set_reminder(time_str, message)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": res})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(res)
+
+                            elif intent == "WHATSAPP":
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": "What is your message?"})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak("What is your message?")
+                                message_queue.put({"type": "status", "value": "LISTENING"})
+                                message = voice.listen()
+                                message_queue.put({"type": "message", "sender": "You", "text": message})
+                                message = message + "\n\n_- This message was sent to you by NOVA_"
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": "To whom do you want to send the message?"})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak("To whom do you want to send the message?")
+                                message_queue.put({"type": "status", "value": "LISTENING"})
+                                name = voice.listen().lower()
+                                message_queue.put({"type": "message", "sender": "You", "text": name})
+                                number = config.CONTACTS.get(name, "+916363466319")
+                                if name not in config.CONTACTS:
+                                    message_queue.put({"type": "message", "sender": "NOVA", "text": f"I couldn't find {name} in your contacts, so I'll send it to your default number."})
                                     message_queue.put({"type": "status", "value": "SPEAKING"})
-                                    voice.speak(system.get_cpu())
-                                elif intent == "RAM":
-                                    message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_ram()})
+                                    voice.speak(f"I couldn't find {name} in your contacts, so I'll send it to your default number.")
+                                res = wp.send_message(number,message)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": res})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(res)
+
+                            elif intent == "SPOTIFY_PLAY":
+                                subject = brain.extract_subject(query, intent)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": f"Searching for {subject} on Spotify"})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(f"Searching for {subject} on Spotify")
+                                result = spotify.play(subject)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "SPOTIFY_PAUSE":
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": spotify.pause()})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(spotify.pause())
+
+                            elif intent == "SPOTIFY_SKIP":
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": spotify.next_track()})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(spotify.next_track())
+
+                            elif intent == "POMODORO":
+                                try:
+                                    mins = int(query.split("for")[1].split()[0])
+                                    res = study.pomodoro(mins)
+                                except:
+                                    res = study.pomodoro(25)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": res})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(res)
+
+                            elif intent == "SUMMARIZE":
+                                summary_result = study.summarize_pdf() 
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": summary_result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(summary_result)
+
+                            elif intent == "FLASHCARD":
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": "Give name of the topic"})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak("Give name of the topic")
+                                message_queue.put({"type": "status", "value": "LISTENING"})
+                                topic = voice.listen().lower()
+                                message_queue.put({"type": "message", "sender": "You", "text": query})
+                                if topic:
+                                    message_queue.put({"type": "message", "sender": "NOVA", "text": f"Generating flashcards for {topic}. Just a moment."})
                                     message_queue.put({"type": "status", "value": "SPEAKING"})
-                                    voice.speak(system.get_ram())
-                                elif intent == "NOTE_ADD":
-                                    message_queue.put({"type": "status", "value": "THINKING"})
-                                    text = brain.extract_subject(query, intent)
-                                    result = voice_note.add_note(text) if text else "I didn't catch what you wanted me to note down."
-                                    message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                    voice.speak(f"Generating flashcards for {topic}. Just a moment.")
+                                    res = study.flashcard(topic)
+                                    message_queue.put({"type": "message", "sender": "NOVA", "text": res})
                                     message_queue.put({"type": "status", "value": "SPEAKING"})
-                                    voice.speak(result)
-                                elif intent in ["CONVERSATION", "SEARCH", "WATCH", "WIKIPEDIA", "NEWS", "REMINDER", "WHATSAPP", "SPOTIFY_PLAY", "SPOTIFY_PAUSE", "SPOTIFY_SKIP", "POMODORO", "SUMMARIZE", "FLASHCARD", "SCREEN_READ", "SCREEN_EXPLAIN", "SCREEN_SUMMARIZE", "APP_OPEN", "CLIPBOARD_EXPLAIN", "CLIPBOARD_TRANSLATE", "VOLUME_UP", "VOLUME_DOWN", "BRIGHTNESS_SET", "NOTE_READ", "NOTE_CLEAR", "SETTINGS", "WHITEBOARD", "VOXEL_EDITOR", "DETECT_FACE"]:
-                                    pass
+                                    voice.speak(res)
+                                else:
+                                    message_queue.put({"type": "message", "sender": "NOVA", "text": "I didn't catch the topic. Please try again."})
+                                    message_queue.put({"type": "status", "value": "SPEAKING"})
+                                    voice.speak("I didn't catch the topic. Please try again.")
+
+                            elif intent == "SCREEN_READ":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                result = screen.read("Describe everything on this screen")
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "SCREEN_EXPLAIN":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                result = screen.read("Explain what is happening on this screen in detail")
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "SCREEN_SUMMARIZE":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                result = screen.read("Summarize the main content on this screen")
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "APP_OPEN":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                subject = brain.extract_subject(query, intent)
+                                result = launcher.launch_app(subject)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "CLIPBOARD_EXPLAIN":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                result = brain.summary(clipboard.explain())
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "CLIPBOARD_TRANSLATE":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                result = brain.summary(clipboard.translate())
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "VOLUME_UP":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                value = brain.extract_number(query, intent)
+                                result = systemControl.volume_up(value if value else 10)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "VOLUME_DOWN":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                value = brain.extract_number(query, intent)
+                                result = systemControl.volume_down(value if value else 10)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "BRIGHTNESS_SET":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                value = brain.extract_number(query, intent)
+                                result = systemControl.set_brightness(value if value else 70)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "NOTE_ADD":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                text = brain.extract_subject(query, intent)
+                                result = voice_note.add_note(text) if text else "I didn't catch what you wanted me to note down."
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "NOTE_READ":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                raw_num = brain.extract_number(query, intent)
+                                try: number = int(raw_num) if raw_num else 1
+                                except ValueError: number = 1
+                                result = voice_note.read_note(number)
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "NOTE_CLEAR":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                result = voice_note.clear_notes()
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(result)
+
+                            elif intent == "SETTINGS":
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                dashboard.after(0, lambda: SettingsWindow(memory, voice_note, config))
+
+                            elif intent == "WHITEBOARD":
+                                msg = "Opening hand tracking whiteboard canvas."
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(msg)
+                                gesture.open_whiteboard()
+
+                            elif intent == "VOXEL_EDITOR":
+                                msg = "Launching 3D Voxel spatial environment."
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(msg)
+                                gesture.open_voxel_editor()
+
+                            elif intent == "DETECT_FACE":
+                                msg = "Activating camera frame recognition layers."
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(msg)
+                                message_queue.put({"type": "status", "value": "THINKING"})
+                                identities = facelink.identify()
+                                if isinstance(identities, list):
+                                    matches_str = ", ".join(identities)
+                                    msg_res = f"I recognize the following face outlines on the video sensor: {matches_str}."
+                                else:
+                                    msg_res = f"Face detection status update: {identities}."
+                                message_queue.put({"type": "message", "sender": "NOVA", "text": msg_res})
+                                message_queue.put({"type": "status", "value": "SPEAKING"})
+                                voice.speak(msg_res)
 
                         for intent_name, future in futures.items():
                             try:
@@ -644,7 +521,6 @@ def main(dashboard,message_queue,input_queue):
                         message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_battery()})
                         message_queue.put({"type": "status", "value": "SPEAKING"})
                         voice.speak(system.get_battery())
-                        message_queue.put({"type": "status", "value": "LISTENING"})
                                     
                     elif intent == "CONVERSATION":
                         memory.log("Shreyans", query)
@@ -653,7 +529,6 @@ def main(dashboard,message_queue,input_queue):
                         message_queue.put({"type": "status", "value": "SPEAKING"})
                         voice.speak(response)
                         memory.log("NOVA", response)
-                        message_queue.put({"type": "status", "value": "LISTENING"})
                     else:
                         memory.log("Shreyans", query)
                         response = brain.ask(query)
@@ -661,7 +536,6 @@ def main(dashboard,message_queue,input_queue):
                         message_queue.put({"type": "status", "value": "SPEAKING"})
                         voice.speak(response)
                         memory.log("NOVA", response)
-                        message_queue.put({"type": "status", "value": "LISTENING"})
 
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
