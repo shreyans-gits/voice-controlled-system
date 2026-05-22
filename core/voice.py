@@ -5,12 +5,15 @@ import os
 import tempfile
 import asyncio
 import edge_tts
+import threading  # Added for thread-safe lock routing
 
 
 class Voice:
     def __init__(self):
         self.recognizer = sr.Recognizer()
         self.recognizer.pause_threshold = 1
+        # FIXED: Initialize a mutual exclusion lock to safeguard the audio hardware device
+        self.audio_lock = threading.Lock()
 
     def get_speed(self):
         import json
@@ -36,17 +39,22 @@ class Voice:
             await communicate.save(temp.name)
             return temp.name
 
-        file_path = asyncio.run(generate())
+        with self.audio_lock:
+            file_path = asyncio.run(generate())
 
-        pygame.mixer.init()
-        pygame.mixer.music.load(file_path)
-        pygame.mixer.music.play()
+            pygame.mixer.init()
+            pygame.mixer.music.load(file_path)
+            pygame.mixer.music.play()
 
-        while pygame.mixer.music.get_busy():
-            continue
+            while pygame.mixer.music.get_busy():
+                continue
 
-        pygame.mixer.quit()
-        os.remove(file_path)
+            pygame.mixer.quit()
+            
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f"[Voice Cleanup Warning] Could not remove temp file: {e}")
 
     def listen(self):
         with sr.Microphone() as source:

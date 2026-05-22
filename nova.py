@@ -443,51 +443,54 @@ def main(dashboard,message_queue,input_queue):
             intent_list = brain.get_intents(query)
             context = IntentContext()
 
+            def safe_speak(handler_func, *args, **kwargs):
+                return handler_func(*args, **kwargs)
+
             INTENT_HANDLERS = {
-                "WEATHER": lambda item, q, ctx: handle_weather(q, ctx, weather, message_queue, voice),
-                "GENERATE_MODEL": lambda item, q, ctx: handle_generate_model(item, q, ctx, model_gen, message_queue, voice),
-                "VIEW_MODEL": lambda item, q, ctx: handle_view_model(q, ctx, brain, gesture, message_queue, voice),
+                "WEATHER": lambda item, q, ctx: safe_speak(handle_weather, q, ctx, weather, message_queue, voice),
+                "GENERATE_MODEL": lambda item, q, ctx: safe_speak(handle_generate_model, item, q, ctx, model_gen, message_queue, voice),
+                "VIEW_MODEL": lambda item, q, ctx: safe_speak(handle_view_model, q, ctx, brain, gesture, message_queue, voice),
                 
-                "CPU": lambda item, q, ctx: handle_system_hardware("CPU", message_queue, voice, system),
-                "RAM": lambda item, q, ctx: handle_system_hardware("RAM", message_queue, voice, system),
-                "BATTERY": lambda item, q, ctx: handle_system_hardware("BATTERY", message_queue, voice, system),
-                "APP_OPEN": lambda item, q, ctx: handle_app_launcher(q, brain, launcher, message_queue, voice),
-                "DETECT_FACE": lambda item, q, ctx: handle_face_link(facelink, message_queue, voice),
-                "CONVERSATION": lambda item, q, ctx: handle_conversation(q, message_queue, voice, brain, memory),
+                "CPU": lambda item, q, ctx: safe_speak(handle_system_hardware, "CPU", message_queue, voice, system),
+                "RAM": lambda item, q, ctx: safe_speak(handle_system_hardware, "RAM", message_queue, voice, system),
+                "BATTERY": lambda item, q, ctx: safe_speak(handle_system_hardware, "BATTERY", message_queue, voice, system),
+                "APP_OPEN": lambda item, q, ctx: safe_speak(handle_app_launcher, q, brain, launcher, message_queue, voice),
+                "DETECT_FACE": lambda item, q, ctx: safe_speak(handle_face_link, facelink, message_queue, voice),
+                "CONVERSATION": lambda item, q, ctx: safe_speak(handle_conversation, q, message_queue, voice, brain, memory),
                 
-                "SEARCH": lambda item, q, ctx: handle_search_modules("SEARCH", q, brain, search, message_queue, voice),
-                "WATCH": lambda item, q, ctx: handle_search_modules("WATCH", q, brain, search, message_queue, voice),
-                "WIKIPEDIA": lambda item, q, ctx: handle_search_modules("WIKIPEDIA", q, brain, search, message_queue, voice),
+                "SEARCH": lambda item, q, ctx: safe_speak(handle_search_modules, "SEARCH", q, brain, search, message_queue, voice),
+                "WATCH": lambda item, q, ctx: safe_speak(handle_search_modules, "WATCH", q, brain, search, message_queue, voice),
+                "WIKIPEDIA": lambda item, q, ctx: safe_speak(handle_search_modules, "WIKIPEDIA", q, brain, search, message_queue, voice),
                 
-                "NEWS": lambda item, q, ctx: handle_news(news, message_queue, voice),
-                "REMINDER": lambda item, q, ctx: handle_reminder(q, reminder, voice, message_queue),
-                "WHATSAPP": lambda item, q, ctx: handle_whatsapp(q, wp, voice, message_queue),
+                "NEWS": lambda item, q, ctx: safe_speak(handle_news, news, message_queue, voice),
+                "REMINDER": lambda item, q, ctx: safe_speak(handle_reminder, q, reminder, voice, message_queue),
+                "WHATSAPP": lambda item, q, ctx: safe_speak(handle_whatsapp, q, wp, voice, message_queue),
                 
-                "SPOTIFY_PLAY": lambda item, q, ctx: handle_spotify("SPOTIFY_PLAY", q, brain, spotify, message_queue, voice),
-                "SPOTIFY_PAUSE": lambda item, q, ctx: handle_spotify("SPOTIFY_PAUSE", q, brain, spotify, message_queue, voice),
-                "SPOTIFY_SKIP": lambda item, q, ctx: handle_spotify("SPOTIFY_SKIP", q, brain, spotify, message_queue, voice),
+                "SPOTIFY_PLAY": lambda item, q, ctx: safe_speak(handle_spotify, "SPOTIFY_PLAY", q, brain, spotify, message_queue, voice),
+                "SPOTIFY_PAUSE": lambda item, q, ctx: safe_speak(handle_spotify, "SPOTIFY_PAUSE", q, brain, spotify, message_queue, voice),
+                "SPOTIFY_SKIP": lambda item, q, ctx: safe_speak(handle_spotify, "SPOTIFY_SKIP", q, brain, spotify, message_queue, voice),
                 
-                "POMODORO": lambda item, q, ctx: handle_study_modules("POMODORO", q, study, voice, message_queue),
-                "SUMMARIZE": lambda item, q, ctx: handle_study_modules("SUMMARIZE", q, study, voice, message_queue),
-                "FLASHCARD": lambda item, q, ctx: handle_study_modules("FLASHCARD", q, study, voice, message_queue),
+                "POMODORO": lambda item, q, ctx: safe_speak(handle_study_modules, "POMODORO", q, study, voice, message_queue),
+                "SUMMARIZE": lambda item, q, ctx: safe_speak(handle_study_modules, "SUMMARIZE", q, study, voice, message_queue),
+                "FLASHCARD": lambda item, q, ctx: safe_speak(handle_study_modules, "FLASHCARD", q, study, voice, message_queue),
                 
-                "SCREEN_READ": lambda item, q, ctx: handle_vision_readers("SCREEN_READ", screen, message_queue, voice),
-                "SCREEN_EXPLAIN": lambda item, q, ctx: handle_vision_readers("SCREEN_EXPLAIN", screen, message_queue, voice),
-                "SCREEN_SUMMARIZE": lambda item, q, ctx: handle_vision_readers("SCREEN_SUMMARIZE", screen, message_queue, voice),
+                "SCREEN_READ": lambda item, q, ctx: safe_speak(handle_vision_readers, "SCREEN_READ", screen, message_queue, voice),
+                "SCREEN_EXPLAIN": lambda item, q, ctx: safe_speak(handle_vision_readers, "SCREEN_EXPLAIN", screen, message_queue, voice),
+                "SCREEN_SUMMARIZE": lambda item, q, ctx: safe_speak(handle_vision_readers, "SCREEN_SUMMARIZE", screen, message_queue, voice),
                 
-                "CLIPBOARD_EXPLAIN": lambda item, q, ctx: handle_clipboard_skills("CLIPBOARD_EXPLAIN", clipboard, brain, message_queue, voice),
-                "CLIPBOARD_TRANSLATE": lambda item, q, ctx: handle_clipboard_skills("CLIPBOARD_TRANSLATE", clipboard, brain, message_queue, voice),
+                "CLIPBOARD_EXPLAIN": lambda item, q, ctx: safe_speak(handle_clipboard_skills, "CLIPBOARD_EXPLAIN", clipboard, brain, message_queue, voice),
+                "CLIPBOARD_TRANSLATE": lambda item, q, ctx: safe_speak(handle_clipboard_skills, "CLIPBOARD_TRANSLATE", clipboard, brain, message_queue, voice),
                 
-                "VOLUME_UP": lambda item, q, ctx: handle_hardware_control("VOLUME_UP", q, brain, systemControl, message_queue, voice),
-                "VOLUME_DOWN": lambda item, q, ctx: handle_hardware_control("VOLUME_DOWN", q, brain, systemControl, message_queue, voice),
-                "BRIGHTNESS_SET": lambda item, q, ctx: handle_hardware_control("BRIGHTNESS_SET", q, brain, systemControl, message_queue, voice),
+                "VOLUME_UP": lambda item, q, ctx: safe_speak(handle_hardware_control, "VOLUME_UP", q, brain, systemControl, message_queue, voice),
+                "VOLUME_DOWN": lambda item, q, ctx: safe_speak(handle_hardware_control, "VOLUME_DOWN", q, brain, systemControl, message_queue, voice),
+                "BRIGHTNESS_SET": lambda item, q, ctx: safe_speak(handle_hardware_control, "BRIGHTNESS_SET", q, brain, systemControl, message_queue, voice),
                 
-                "NOTE_ADD": lambda item, q, ctx: handle_voice_notes("NOTE_ADD", q, brain, voice_note, message_queue, voice),
-                "NOTE_READ": lambda item, q, ctx: handle_voice_notes("NOTE_READ", q, brain, voice_note, message_queue, voice),
-                "NOTE_CLEAR": lambda item, q, ctx: handle_voice_notes("NOTE_CLEAR", q, brain, voice_note, message_queue, voice),
+                "NOTE_ADD": lambda item, q, ctx: safe_speak(handle_voice_notes, "NOTE_ADD", q, brain, voice_note, message_queue, voice),
+                "NOTE_READ": lambda item, q, ctx: safe_speak(handle_voice_notes, "NOTE_READ", q, brain, voice_note, message_queue, voice),
+                "NOTE_CLEAR": lambda item, q, ctx: safe_speak(handle_voice_notes, "NOTE_CLEAR", q, brain, voice_note, message_queue, voice),
                 
-                "WHITEBOARD": lambda item, q, ctx: handle_static_skills("WHITEBOARD", gesture, message_queue, voice),
-                "VOXEL_EDITOR": lambda item, q, ctx: handle_static_skills("VOXEL_EDITOR", gesture, message_queue, voice),
+                "WHITEBOARD": lambda item, q, ctx: safe_speak(handle_static_skills, "WHITEBOARD", gesture, message_queue, voice),
+                "VOXEL_EDITOR": lambda item, q, ctx: safe_speak(handle_static_skills, "VOXEL_EDITOR", gesture, message_queue, voice),
                 "SETTINGS": lambda item, q, ctx: dashboard.after(0, lambda: SettingsWindow(memory, voice_note, config))
             }
 
