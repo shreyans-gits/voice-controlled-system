@@ -510,7 +510,7 @@ def main(dashboard,message_queue,input_queue):
                 for item in dependent:
                     intent_name = item["intent"]
                     if intent_name in INTENT_HANDLERS:
-                        INTENT_HANDLERS[intent_name](query, context)
+                        INTENT_HANDLERS[intent_name](item, query, context)
                     else:
                         intent = intent_name
 
