@@ -4,6 +4,8 @@ import threading
 from plyer import notification
 import queue
 import os
+from concurrent.futures import ThreadPoolExecutor
+from core.context import IntentContext
 
 import sys
 import types
@@ -201,13 +203,13 @@ def main(dashboard,message_queue,input_queue):
         else:
             intent = brain.get_intent(query)
 
-            if intent == "WEATHER":
-                message_queue.put({"type": "message", "sender": "NOVA", "text": weather.getWeather()})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(weather.getWeather())
-                message_queue.put({"type": "status", "value": "LISTENING"})
+            # if intent == "WEATHER":
+            #     message_queue.put({"type": "message", "sender": "NOVA", "text": weather.getWeather()})
+            #     message_queue.put({"type": "status", "value": "SPEAKING"})
+            #     voice.speak(weather.getWeather())
+            #     message_queue.put({"type": "status", "value": "LISTENING"})
 
-            elif intent == "BATTERY":
+            if intent == "BATTERY":
                 message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_battery()})
                 message_queue.put({"type": "status", "value": "SPEAKING"})
                 voice.speak(system.get_battery())
@@ -493,60 +495,60 @@ def main(dashboard,message_queue,input_queue):
                 gesture.open_voxel_editor()
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
-            elif intent == "VIEW_MODEL":
-                subject = brain.extract_subject(query, intent)
-                clean_subject = subject.lower().replace("model", "").replace("3d", "").strip()
-                if not clean_subject:
-                    clean_subject = "generated_asset"
+            # elif intent == "VIEW_MODEL":
+            #     subject = brain.extract_subject(query, intent)
+            #     clean_subject = subject.lower().replace("model", "").replace("3d", "").strip()
+            #     if not clean_subject:
+            #         clean_subject = "generated_asset"
                     
-                expected_filename = f"{clean_subject.replace(' ', '_')}.obj"
+            #     expected_filename = f"{clean_subject.replace(' ', '_')}.obj"
                 
-                local_path = os.path.abspath(os.path.join("data", "outputs", expected_filename))
-                alt_path = os.path.abspath(os.path.join("skills", "model_gen", "outputs", expected_filename))
+            #     local_path = os.path.abspath(os.path.join("data", "outputs", expected_filename))
+            #     alt_path = os.path.abspath(os.path.join("skills", "model_gen", "outputs", expected_filename))
                 
-                target_path = local_path if os.path.exists(local_path) else alt_path
+            #     target_path = local_path if os.path.exists(local_path) else alt_path
                 
-                if os.path.exists(target_path):
-                    msg = f"Opening local 3D file structure for {clean_subject}."
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(msg)
-                    gesture.open_model(target_path)
-                else:
-                    msg = f"I could not locate a pre-cached file for {clean_subject}. Opening the default 3D canvas instead."
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(msg)
-                    gesture.open_sphere()
+            #     if os.path.exists(target_path):
+            #         msg = f"Opening local 3D file structure for {clean_subject}."
+            #         message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+            #         message_queue.put({"type": "status", "value": "SPEAKING"})
+            #         voice.speak(msg)
+            #         gesture.open_model(target_path)
+            #     else:
+            #         msg = f"I could not locate a pre-cached file for {clean_subject}. Opening the default 3D canvas instead."
+            #         message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+            #         message_queue.put({"type": "status", "value": "SPEAKING"})
+            #         voice.speak(msg)
+            #         gesture.open_sphere()
                     
-                message_queue.put({"type": "status", "value": "LISTENING"})
+            #     message_queue.put({"type": "status", "value": "LISTENING"})
 
-            elif intent == "GENERATE_MODEL":
-                subject = brain.extract_subject(query, intent)
-                msg = f"Submitting job generation token for {subject} to Shape-E cloud pipeline."
-                message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(msg)
-                message_queue.put({"type": "status", "value": "THINKING"})
+            # elif intent == "GENERATE_MODEL":
+            #     subject = brain.extract_subject(query, intent)
+            #     msg = f"Submitting job generation token for {subject} to Shape-E cloud pipeline."
+            #     message_queue.put({"type": "message", "sender": "NOVA", "text": msg})
+            #     message_queue.put({"type": "status", "value": "SPEAKING"})
+            #     voice.speak(msg)
+            #     message_queue.put({"type": "status", "value": "THINKING"})
                 
-                try:
-                    downloaded_file = model_gen.generate(subject)
-                    msg_success = f"Mesh asset created successfully. Initializing tracking matrix."
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": msg_success})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(msg_success)
-                    gesture.open_model(downloaded_file)
-                except TimeoutError as te:
-                    msg_err = "The 3D generation request timed out. Please verify your remote Google Colab runtime session."
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": msg_err})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(msg_err)
-                except Exception as e:
-                    msg_err = "An internal processing exception halted the mesh asset workflow."
-                    message_queue.put({"type": "message", "sender": "NOVA", "text": msg_err})
-                    message_queue.put({"type": "status", "value": "SPEAKING"})
-                    voice.speak(msg_err)
-                message_queue.put({"type": "status", "value": "LISTENING"})
+            #     try:
+            #         downloaded_file = model_gen.generate(subject)
+            #         msg_success = f"Mesh asset created successfully. Initializing tracking matrix."
+            #         message_queue.put({"type": "message", "sender": "NOVA", "text": msg_success})
+            #         message_queue.put({"type": "status", "value": "SPEAKING"})
+            #         voice.speak(msg_success)
+            #         gesture.open_model(downloaded_file)
+            #     except TimeoutError as te:
+            #         msg_err = "The 3D generation request timed out. Please verify your remote Google Colab runtime session."
+            #         message_queue.put({"type": "message", "sender": "NOVA", "text": msg_err})
+            #         message_queue.put({"type": "status", "value": "SPEAKING"})
+            #         voice.speak(msg_err)
+            #     except Exception as e:
+            #         msg_err = "An internal processing exception halted the mesh asset workflow."
+            #         message_queue.put({"type": "message", "sender": "NOVA", "text": msg_err})
+            #         message_queue.put({"type": "status", "value": "SPEAKING"})
+            #         voice.speak(msg_err)
+            #     message_queue.put({"type": "status", "value": "LISTENING"})
 
             elif intent == "DETECT_FACE":
                 msg = "Activating camera frame recognition layers."
@@ -577,12 +579,90 @@ def main(dashboard,message_queue,input_queue):
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
             else:
-                memory.log("Shreyans", query)
-                response = brain.ask(query)
-                message_queue.put({"type": "message", "sender": "NOVA", "text": response})
-                message_queue.put({"type": "status", "value": "SPEAKING"})
-                voice.speak(response)
-                memory.log("NOVA", response)
+                intent_list = brain.get_intents(query)
+                context = IntentContext()
+
+                INTENT_HANDLERS = {
+                    "WEATHER": lambda q, ctx: handle_weather(q, ctx, weather, message_queue, voice),
+                    "GENERATE_MODEL": lambda q, ctx: handle_generate_model(q, ctx, brain, model_gen, message_queue, voice),
+                    "VIEW_MODEL": lambda q, ctx: handle_view_model(q, ctx, brain, gesture, message_queue, voice),
+                }
+
+                independent = [i for i in intent_list if not i.get("depends_on")]
+                dependent = [i for i in intent_list if i.get("depends_on")]
+
+                if independent:
+                    with ThreadPoolExecutor() as executor:
+                        futures = {}
+                        for item in independent:
+                            intent_name = item["intent"]
+                            
+                            if intent_name in INTENT_HANDLERS:
+                                futures[intent_name] = executor.submit(INTENT_HANDLERS[intent_name], query, context)
+                            else:
+                                intent = intent_name
+                                
+                                if intent == "BATTERY":
+                                    message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_battery()})
+                                    message_queue.put({"type": "status", "value": "SPEAKING"})
+                                    voice.speak(system.get_battery())
+                                elif intent == "CPU":
+                                    message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_cpu()})
+                                    message_queue.put({"type": "status", "value": "SPEAKING"})
+                                    voice.speak(system.get_cpu())
+                                elif intent == "RAM":
+                                    message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_ram()})
+                                    message_queue.put({"type": "status", "value": "SPEAKING"})
+                                    voice.speak(system.get_ram())
+                                elif intent == "NOTE_ADD":
+                                    message_queue.put({"type": "status", "value": "THINKING"})
+                                    text = brain.extract_subject(query, intent)
+                                    result = voice_note.add_note(text) if text else "I didn't catch what you wanted me to note down."
+                                    message_queue.put({"type": "message", "sender": "NOVA", "text": result})
+                                    message_queue.put({"type": "status", "value": "SPEAKING"})
+                                    voice.speak(result)
+                                elif intent in ["CONVERSATION", "SEARCH", "WATCH", "WIKIPEDIA", "NEWS", "REMINDER", "WHATSAPP", "SPOTIFY_PLAY", "SPOTIFY_PAUSE", "SPOTIFY_SKIP", "POMODORO", "SUMMARIZE", "FLASHCARD", "SCREEN_READ", "SCREEN_EXPLAIN", "SCREEN_SUMMARIZE", "APP_OPEN", "CLIPBOARD_EXPLAIN", "CLIPBOARD_TRANSLATE", "VOLUME_UP", "VOLUME_DOWN", "BRIGHTNESS_SET", "NOTE_READ", "NOTE_CLEAR", "SETTINGS", "WHITEBOARD", "VOXEL_EDITOR", "DETECT_FACE"]:
+                                    pass
+
+                        for intent_name, future in futures.items():
+                            try:
+                                future.result()
+                            except Exception as thread_ex:
+                                print(f"[Thread Error] Exception thrown in parallel intent {intent_name}: {thread_ex}")
+
+                for item in dependent:
+                    intent_name = item["intent"]
+                    if intent_name in INTENT_HANDLERS:
+                        INTENT_HANDLERS[intent_name](query, context)
+                    else:
+                        intent = intent_name
+
+                if len(intent_list) == 1 and intent_list[0]["intent"] not in INTENT_HANDLERS:
+                    intent = intent_list[0]["intent"]
+                    
+                    if intent == "BATTERY":
+                        message_queue.put({"type": "message", "sender": "NOVA", "text": system.get_battery()})
+                        message_queue.put({"type": "status", "value": "SPEAKING"})
+                        voice.speak(system.get_battery())
+                        message_queue.put({"type": "status", "value": "LISTENING"})
+                                    
+                    elif intent == "CONVERSATION":
+                        memory.log("Shreyans", query)
+                        response = brain.ask(query)
+                        message_queue.put({"type": "message", "sender": "NOVA", "text": response})
+                        message_queue.put({"type": "status", "value": "SPEAKING"})
+                        voice.speak(response)
+                        memory.log("NOVA", response)
+                        message_queue.put({"type": "status", "value": "LISTENING"})
+                    else:
+                        memory.log("Shreyans", query)
+                        response = brain.ask(query)
+                        message_queue.put({"type": "message", "sender": "NOVA", "text": response})
+                        message_queue.put({"type": "status", "value": "SPEAKING"})
+                        voice.speak(response)
+                        memory.log("NOVA", response)
+                        message_queue.put({"type": "status", "value": "LISTENING"})
+
                 message_queue.put({"type": "status", "value": "LISTENING"})
 
 if __name__ == "__main__":
