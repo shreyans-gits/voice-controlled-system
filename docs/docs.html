@@ -23,7 +23,6 @@
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   html { scroll-behavior: smooth; }
 
   body {
@@ -35,574 +34,127 @@
     overflow-x: hidden;
   }
 
-  /* Ambient background */
   body::before {
     content: '';
     position: fixed;
-    top: -200px;
-    left: -200px;
-    width: 600px;
-    height: 600px;
+    top: -200px; left: -200px;
+    width: 600px; height: 600px;
     background: radial-gradient(circle, rgba(0,212,255,0.04) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
   }
 
-  /* SIDEBAR */
   .sidebar {
-    width: 260px;
-    height: 100vh;
+    width: 260px; height: 100vh;
     background: var(--surface);
     border-right: 1px solid var(--border);
-    position: fixed;
-    left: 0; top: 0;
-    overflow-y: auto;
-    z-index: 100;
+    position: fixed; left: 0; top: 0;
+    overflow-y: auto; z-index: 100;
     padding-bottom: 40px;
   }
 
-  .sidebar-logo {
-    padding: 28px 24px 20px;
-    border-bottom: 1px solid var(--border);
-  }
+  .sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
+  .sidebar-logo .logo-text { font-family: 'Space Mono', monospace; font-size: 22px; font-weight: 700; color: var(--cyan); letter-spacing: 4px; }
+  .sidebar-logo .logo-sub { font-size: 10px; color: var(--text-dim); letter-spacing: 2px; margin-top: 4px; font-family: 'Space Mono', monospace; }
+  .sidebar-version { display: inline-block; background: var(--cyan-dim); border: 1px solid rgba(0,212,255,0.2); color: var(--cyan); font-family: 'Space Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-top: 8px; }
 
-  .sidebar-logo .logo-text {
-    font-family: 'Space Mono', monospace;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--cyan);
-    letter-spacing: 4px;
-  }
+  .nav-section { padding: 20px 24px 8px; font-size: 10px; letter-spacing: 3px; color: var(--text-dim); text-transform: uppercase; font-family: 'Space Mono', monospace; }
 
-  .sidebar-logo .logo-sub {
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 2px;
-    margin-top: 4px;
-    font-family: 'Space Mono', monospace;
-  }
+  .nav-item { display: block; padding: 9px 24px; color: var(--text-mid); text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.2s; border-left: 2px solid transparent; }
+  .nav-item:hover, .nav-item.active { color: var(--cyan); background: var(--cyan-dim); border-left-color: var(--cyan); }
 
-  .sidebar-version {
-    display: inline-block;
-    background: var(--cyan-dim);
-    border: 1px solid rgba(0,212,255,0.2);
-    color: var(--cyan);
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    margin-top: 8px;
-  }
+  .main { margin-left: 260px; flex: 1; max-width: 900px; padding: 60px 64px; position: relative; z-index: 1; }
 
-  .nav-section {
-    padding: 20px 24px 8px;
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    font-family: 'Space Mono', monospace;
-  }
+  .section { margin-bottom: 80px; animation: fadeUp 0.5s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-  .nav-item {
-    display: block;
-    padding: 9px 24px;
-    color: var(--text-mid);
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.2s;
-    border-left: 2px solid transparent;
-    position: relative;
-  }
+  .section-tag { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--cyan); text-transform: uppercase; margin-bottom: 12px; opacity: 0.7; }
 
-  .nav-item:hover {
-    color: var(--cyan);
-    background: var(--cyan-dim);
-    border-left-color: var(--cyan);
-  }
-
-  .nav-item.active {
-    color: var(--cyan);
-    background: var(--cyan-dim);
-    border-left-color: var(--cyan);
-  }
-
-  /* MAIN */
-  .main {
-    margin-left: 260px;
-    flex: 1;
-    max-width: 900px;
-    padding: 60px 64px;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* SECTIONS */
-  .section {
-    margin-bottom: 80px;
-    animation: fadeUp 0.5s ease both;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .section-tag {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: var(--cyan);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    opacity: 0.7;
-  }
-
-  h1 {
-    font-size: 48px;
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 20px;
-    color: #fff;
-  }
-
+  h1 { font-size: 48px; font-weight: 800; line-height: 1.1; margin-bottom: 20px; color: #fff; }
   h1 span { color: var(--cyan); }
+  h2 { font-size: 28px; font-weight: 700; margin-bottom: 16px; color: #fff; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 16px; font-weight: 700; color: var(--cyan); margin-bottom: 8px; font-family: 'Space Mono', monospace; letter-spacing: 1px; }
 
-  h2 {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    color: #fff;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-  }
+  p { color: var(--text-mid); line-height: 1.8; font-size: 15px; margin-bottom: 16px; }
 
-  h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--cyan);
-    margin-bottom: 8px;
-    font-family: 'Space Mono', monospace;
-    letter-spacing: 1px;
-  }
+  .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--cyan-dim); border: 1px solid rgba(0,212,255,0.2); border-radius: 4px; padding: 6px 14px; margin-bottom: 24px; }
+  .hero-badge span { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--cyan); letter-spacing: 1px; }
+  .hero-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+  .hero-desc { font-size: 17px; color: var(--text-mid); line-height: 1.8; max-width: 600px; margin-bottom: 32px; }
 
-  p {
-    color: var(--text-mid);
-    line-height: 1.8;
-    font-size: 15px;
-    margin-bottom: 16px;
-  }
-
-  /* HERO */
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--cyan-dim);
-    border: 1px solid rgba(0,212,255,0.2);
-    border-radius: 4px;
-    padding: 6px 14px;
-    margin-bottom: 24px;
-  }
-
-  .hero-badge span {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--cyan);
-    letter-spacing: 1px;
-  }
-
-  .hero-dot {
-    width: 6px; height: 6px;
-    background: var(--green);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
-  }
-
-  .hero-desc {
-    font-size: 17px;
-    color: var(--text-mid);
-    line-height: 1.8;
-    max-width: 600px;
-    margin-bottom: 32px;
-  }
-
-  /* FLOW DIAGRAM */
-  .flow {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 28px;
-    font-family: 'Space Mono', monospace;
-    font-size: 13px;
-    margin: 20px 0;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .flow::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-  }
-
-  .flow-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 14px;
-    color: var(--text-mid);
-  }
-
+  .flow { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; font-family: 'Space Mono', monospace; font-size: 13px; margin: 20px 0; position: relative; overflow: hidden; }
+  .flow::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); }
+  .flow-step { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 14px; color: var(--text-mid); }
   .flow-step:last-child { margin-bottom: 0; }
-
-  .flow-arrow {
-    color: var(--cyan);
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
+  .flow-arrow { color: var(--cyan); flex-shrink: 0; margin-top: 1px; }
   .flow-step strong { color: var(--text); }
 
-  /* CODE BLOCKS */
-  pre, code {
-    font-family: 'Space Mono', monospace;
-  }
-
-  pre {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 20px 24px;
-    overflow-x: auto;
-    margin: 16px 0;
-    font-size: 13px;
-    line-height: 1.7;
-    color: var(--text);
-    position: relative;
-  }
-
-  pre::before {
-    content: attr(data-lang);
-    position: absolute;
-    top: 10px; right: 14px;
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  code {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 2px 7px;
-    font-size: 12px;
-    color: var(--cyan);
-  }
-
-  pre code {
-    background: none;
-    border: none;
-    padding: 0;
-    color: inherit;
-  }
-
+  pre, code { font-family: 'Space Mono', monospace; }
+  pre { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 20px 24px; overflow-x: auto; margin: 16px 0; font-size: 13px; line-height: 1.7; color: var(--text); position: relative; }
+  pre::before { content: attr(data-lang); position: absolute; top: 10px; right: 14px; font-size: 10px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+  code { background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 2px 7px; font-size: 12px; color: var(--cyan); }
+  pre code { background: none; border: none; padding: 0; color: inherit; }
   .comment { color: #444466; }
   .kw { color: var(--cyan); }
   .str { color: var(--green); }
   .num { color: var(--yellow); }
 
-  /* TABLES */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 16px 0;
-    font-size: 14px;
-  }
-
-  th {
-    text-align: left;
-    padding: 10px 16px;
-    background: var(--surface2);
-    color: var(--cyan);
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-  }
-
-  td {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    color: var(--text-mid);
-    vertical-align: top;
-  }
-
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th { text-align: left; padding: 10px 16px; background: var(--surface2); color: var(--cyan); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-mid); vertical-align: top; }
   tr:last-child td { border-bottom: none; }
-
   tr:hover td { background: var(--cyan-dim); }
+  td:first-child { color: var(--text); font-weight: 600; white-space: nowrap; }
 
-  td:first-child {
-    color: var(--text);
-    font-weight: 600;
-    white-space: nowrap;
-  }
+  .module-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .module-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; transition: border-color 0.2s, transform 0.2s; }
+  .module-card:hover { border-color: rgba(0,212,255,0.3); transform: translateY(-2px); }
+  .module-card-title { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--cyan); letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .module-card-title::before { content: ''; width: 6px; height: 6px; background: var(--cyan); border-radius: 50%; flex-shrink: 0; }
+  .module-card p { font-size: 13px; margin-bottom: 12px; color: var(--text-dim); }
 
-  /* MODULE CARDS */
-  .module-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin: 20px 0;
-  }
-
-  .module-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px;
-    transition: border-color 0.2s, transform 0.2s;
-  }
-
-  .module-card:hover {
-    border-color: rgba(0,212,255,0.3);
-    transform: translateY(-2px);
-  }
-
-  .module-card-title {
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    color: var(--cyan);
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .module-card-title::before {
-    content: '';
-    width: 6px; height: 6px;
-    background: var(--cyan);
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .module-card p {
-    font-size: 13px;
-    margin-bottom: 12px;
-    color: var(--text-dim);
-  }
-
-  .cmd-list {
-    list-style: none;
-  }
-
-  .cmd-list li {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--text-mid);
-    padding: 4px 0;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
+  .cmd-list { list-style: none; }
+  .cmd-list li { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text-mid); padding: 4px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
   .cmd-list li:last-child { border-bottom: none; }
+  .cmd-list li::before { content: '›'; color: var(--cyan); font-size: 14px; }
 
-  .cmd-list li::before {
-    content: '›';
-    color: var(--cyan);
-    font-size: 14px;
-  }
-
-  /* CALLOUT BOXES */
-  .callout {
-    border-radius: 6px;
-    padding: 16px 20px;
-    margin: 16px 0;
-    border-left: 3px solid;
-    font-size: 14px;
-  }
-
-  .callout-info {
-    background: rgba(0,212,255,0.05);
-    border-color: var(--cyan);
-    color: var(--text-mid);
-  }
-
-  .callout-warn {
-    background: rgba(255,215,0,0.05);
-    border-color: var(--yellow);
-    color: var(--text-mid);
-  }
-
-  .callout-title {
-    font-weight: 700;
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-
+  .callout { border-radius: 6px; padding: 16px 20px; margin: 16px 0; border-left: 3px solid; font-size: 14px; }
+  .callout-info { background: rgba(0,212,255,0.05); border-color: var(--cyan); color: var(--text-mid); }
+  .callout-warn { background: rgba(255,215,0,0.05); border-color: var(--yellow); color: var(--text-mid); }
+  .callout-title { font-weight: 700; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
   .callout-info .callout-title { color: var(--cyan); }
   .callout-warn .callout-title { color: var(--yellow); }
 
-  /* BADGES */
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 1px;
-    font-weight: 700;
-  }
-
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px; font-weight: 700; }
   .badge-required { background: rgba(255,68,102,0.15); color: var(--red); border: 1px solid rgba(255,68,102,0.3); }
   .badge-optional { background: rgba(255,215,0,0.1); color: var(--yellow); border: 1px solid rgba(255,215,0,0.2); }
   .badge-free { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
 
-  /* STEPS */
   .steps { margin: 20px 0; }
-
-  .step {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 28px;
-    position: relative;
-  }
-
-  .step:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    left: 17px;
-    top: 36px;
-    bottom: -28px;
-    width: 1px;
-    background: var(--border);
-  }
-
-  .step-num {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Space Mono', monospace;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--cyan);
-    flex-shrink: 0;
-  }
-
+  .step { display: flex; gap: 20px; margin-bottom: 28px; position: relative; }
+  .step:not(:last-child)::after { content: ''; position: absolute; left: 17px; top: 36px; bottom: -28px; width: 1px; background: var(--border); }
+  .step-num { width: 36px; height: 36px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; color: var(--cyan); flex-shrink: 0; }
   .step-content { flex: 1; padding-top: 6px; }
   .step-content h3 { color: var(--text); font-family: 'Syne', sans-serif; font-size: 15px; margin-bottom: 6px; }
 
-  /* STRUCTURE TREE */
-  .tree {
-    font-family: 'Space Mono', monospace;
-    font-size: 13px;
-    line-height: 2;
-    color: var(--text-mid);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 24px 28px;
-    margin: 16px 0;
-  }
-
+  .tree { font-family: 'Space Mono', monospace; font-size: 13px; line-height: 2; color: var(--text-mid); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px 28px; margin: 16px 0; }
   .tree .dir { color: var(--cyan); font-weight: 700; }
   .tree .comment { color: #333355; font-size: 11px; }
-  .tree .file { color: var(--text-mid); }
 
-  /* COMMAND REFERENCE */
-  .cmd-ref {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 16px 0;
-  }
-
-  .cmd-ref-header {
-    background: var(--surface2);
-    padding: 12px 20px;
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: var(--cyan);
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .cmd-ref-item {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-
+  .cmd-ref { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin: 16px 0; }
+  .cmd-ref-header { background: var(--surface2); padding: 12px 20px; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--cyan); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  .cmd-ref-item { display: flex; align-items: center; gap: 20px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
   .cmd-ref-item:last-child { border-bottom: none; }
-
   .cmd-ref-item:hover { background: var(--cyan-dim); }
+  .cmd-text { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text); flex: 1; }
+  .cmd-intent { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--cyan); background: var(--cyan-dim); border: 1px solid rgba(0,212,255,0.15); padding: 2px 8px; border-radius: 3px; white-space: nowrap; }
 
-  .cmd-text {
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    color: var(--text);
-    flex: 1;
-  }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
 
-  .cmd-intent {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    color: var(--cyan);
-    background: var(--cyan-dim);
-    border: 1px solid rgba(0,212,255,0.15);
-    padding: 2px 8px;
-    border-radius: 3px;
-    white-space: nowrap;
-  }
-
-  /* DIVIDER */
-  .divider {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 48px 0;
-  }
-
-  /* FOOTER */
-  .footer {
-    margin-top: 80px;
-    padding-top: 32px;
-    border-top: 1px solid var(--border);
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    color: var(--text-dim);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
+  .footer { margin-top: 80px; padding-top: 32px; border-top: 1px solid var(--border); font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-dim); display: flex; justify-content: space-between; align-items: center; }
   .footer a { color: var(--cyan); text-decoration: none; }
 
-  /* SCROLLBAR */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -617,12 +169,11 @@
 </head>
 <body>
 
-<!-- SIDEBAR -->
 <nav class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-text">N.O.V.A.</div>
     <div class="logo-sub">Neurally Optimized Voice Assistant</div>
-    <div class="sidebar-version">v1.0 — Phase 8</div>
+    <div class="sidebar-version">v2.0 — Phase 12</div>
   </div>
 
   <div class="nav-section">Getting Started</div>
@@ -633,6 +184,7 @@
 
   <div class="nav-section">Architecture</div>
   <a href="#how-it-works" class="nav-item">How It Works</a>
+  <a href="#multi-intent" class="nav-item">Multi-Intent Engine</a>
   <a href="#structure" class="nav-item">Project Structure</a>
   <a href="#intent-system" class="nav-item">Intent System</a>
   <a href="#memory-system" class="nav-item">Memory System</a>
@@ -643,6 +195,11 @@
   <a href="#productivity" class="nav-item">Productivity</a>
   <a href="#media" class="nav-item">Media & Search</a>
 
+  <div class="nav-section">Skills</div>
+  <a href="#facelink" class="nav-item">FaceLink</a>
+  <a href="#gesture" class="nav-item">Gesture Suite</a>
+  <a href="#modelgen" class="nav-item">ModelGen</a>
+
   <div class="nav-section">Reference</div>
   <a href="#commands" class="nav-item">Voice Commands</a>
   <a href="#api-keys" class="nav-item">API Keys</a>
@@ -650,7 +207,6 @@
   <a href="#contributing" class="nav-item">Contributing</a>
 </nav>
 
-<!-- MAIN CONTENT -->
 <main class="main">
 
   <!-- INTRO -->
@@ -661,11 +217,11 @@
     </div>
     <h1>N.O.V.A.<br><span>Documentation</span></h1>
     <p class="hero-desc">
-      A fully local, voice and text controlled AI desktop assistant. Talk to it, type to it — NOVA understands intent, routes to the right module, and responds through voice and a live chat window.
+      A fully local, voice and text controlled AI desktop assistant. Talk to it, type to it — NOVA understands intent, routes to the right module, responds through voice and a live chat window, recognizes faces, renders 3D models, and executes multi-step tasks in a single sentence.
     </p>
     <div class="callout callout-info">
       <div class="callout-title">What makes NOVA different</div>
-      NOVA isn't a wrapper around a chatbot. It has a real intent routing system, persistent memory that summarizes sessions using AI, 13 functional modules, full GUI with system tray, and a first-time setup wizard. Built entirely in Python, runs locally.
+      NOVA isn't a wrapper around a chatbot. It has a real multi-intent routing engine, persistent memory, 13 functional modules, 3 deep skills (face recognition, hand-gesture creative suite, text-to-3D generation), full GUI with system tray, and a first-time setup wizard. Built entirely in Python, runs locally.
     </div>
   </section>
 
@@ -673,7 +229,6 @@
   <section class="section" id="installation">
     <div class="section-tag">Getting Started</div>
     <h2>Installation</h2>
-
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
@@ -683,7 +238,6 @@
 cd NOVA</pre>
         </div>
       </div>
-
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-content">
@@ -692,7 +246,6 @@ cd NOVA</pre>
 venv\Scripts\activate</pre>
         </div>
       </div>
-
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-content">
@@ -700,16 +253,14 @@ venv\Scripts\activate</pre>
           <pre data-lang="bash">pip install -r requirements.txt</pre>
         </div>
       </div>
-
       <div class="step">
         <div class="step-num">4</div>
         <div class="step-content">
           <h3>Run the setup wizard</h3>
           <pre data-lang="bash">python setup.py</pre>
-          <p>This opens a GUI where you enter your API keys and preferences. It generates your <code>.env</code> file automatically and then closes itself.</p>
+          <p>This opens a GUI where you enter your API keys and preferences. It generates your <code>.env</code> file automatically.</p>
         </div>
       </div>
-
       <div class="step">
         <div class="step-num">5</div>
         <div class="step-content">
@@ -718,7 +269,6 @@ venv\Scripts\activate</pre>
         </div>
       </div>
     </div>
-
     <div class="callout callout-warn">
       <div class="callout-title">Windows Only</div>
       NOVA is built for Windows. System control (volume, brightness), pycaw audio, and system tray features are Windows-specific. Linux/macOS support is not guaranteed.
@@ -730,7 +280,6 @@ venv\Scripts\activate</pre>
     <div class="section-tag">Getting Started</div>
     <h2>First Time Setup</h2>
     <p>Run <code>setup.py</code> before launching NOVA for the first time. It's a GUI wizard that walks you through every configuration option.</p>
-
     <table>
       <tr><th>Field</th><th>Description</th></tr>
       <tr><td>Your Name</td><td>NOVA will use this to greet you and personalize responses</td></tr>
@@ -742,8 +291,6 @@ venv\Scripts\activate</pre>
       <tr><td>Spotify Credentials</td><td>Client ID, Secret, and Redirect URI from Spotify Developer Dashboard</td></tr>
       <tr><td>Contacts</td><td>Name + phone number pairs for WhatsApp messaging</td></tr>
     </table>
-
-    <p>After saving, <code>setup.py</code> deletes itself. Your <code>.env</code> file is created in the project root and is never committed to git.</p>
   </section>
 
   <!-- CONFIGURATION -->
@@ -751,7 +298,6 @@ venv\Scripts\activate</pre>
     <div class="section-tag">Getting Started</div>
     <h2>Configuration</h2>
     <p>All configuration is read from <code>.env</code> via <code>config.py</code>. You never need to edit these files manually — use <code>setup.py</code> for initial setup and say <strong>"open settings"</strong> inside NOVA to change anything later.</p>
-
     <pre data-lang=".env"><span class="comment"># GROQ</span>
 API_KEY = "your_groq_key"
 
@@ -783,17 +329,53 @@ gemini_api_key = "your_gemini_key"</pre>
   <section class="section" id="how-it-works">
     <div class="section-tag">Architecture</div>
     <h2>How It Works</h2>
-
     <div class="flow">
       <div class="flow-step"><span class="flow-arrow">→</span><span>You <strong>speak</strong> or <strong>type</strong> a query</span></div>
       <div class="flow-step"><span class="flow-arrow">→</span><span><code>voice.listen()</code> transcribes speech via Google Speech API, or text input is picked up from the GUI</span></div>
-      <div class="flow-step"><span class="flow-arrow">→</span><span><code>brain.get_intent()</code> sends the query to Groq — returns one word like <strong>WEATHER</strong> or <strong>CONVERSATION</strong></span></div>
-      <div class="flow-step"><span class="flow-arrow">→</span><span>If needed, <code>brain.extract_subject()</code> pulls the clean subject out — "play some Drake" → <strong>Drake</strong></span></div>
-      <div class="flow-step"><span class="flow-arrow">→</span><span>The correct <strong>module</strong> is called with the subject</span></div>
-      <div class="flow-step"><span class="flow-arrow">→</span><span>Result is displayed in the <strong>chat window</strong> and <strong>spoken aloud</strong></span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span><code>brain.get_intents()</code> sends the query to Groq — returns a structured JSON list of intents with subjects and dependency links</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span><strong>Independent intents</strong> (no dependencies) run in <strong>parallel</strong> via ThreadPoolExecutor</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span><strong>Dependent intents</strong> run <strong>sequentially</strong> after their dependency completes, receiving output via <code>IntentContext</code></span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Each handler calls its module, puts result in the <strong>chat window</strong>, and <strong>speaks aloud</strong></span></div>
       <div class="flow-step"><span class="flow-arrow">→</span><span>If intent is <strong>CONVERSATION</strong>, the exchange is logged to memory</span></div>
       <div class="flow-step"><span class="flow-arrow">→</span><span>On shutdown, Groq <strong>summarizes the session</strong> and merges it with past memory</span></div>
       <div class="flow-step"><span class="flow-arrow">→</span><span>Next startup, the summary is <strong>injected into the system prompt</strong> — NOVA remembers you</span></div>
+    </div>
+  </section>
+
+  <!-- MULTI-INTENT ENGINE -->
+  <section class="section" id="multi-intent">
+    <div class="section-tag">Architecture</div>
+    <h2>Multi-Intent Engine</h2>
+    <p>NOVA can parse a single natural language query into multiple coordinated actions. The engine lives in <code>brain.get_intents()</code> and the executor in <code>nova.py</code>.</p>
+
+    <h3>How it works</h3>
+    <p>Each intent in the list has three fields: the intent name, an extracted subject, and an optional <code>depends_on</code> field. If <code>depends_on</code> is null, the intent is independent and can run in parallel. If it names another intent, it waits for that intent to finish and reads its output from the shared <code>IntentContext</code> object.</p>
+
+    <pre data-lang="json">[
+  {"intent": "GENERATE_MODEL", "subject": "castle", "depends_on": null},
+  {"intent": "VIEW_MODEL",      "subject": "castle", "depends_on": "GENERATE_MODEL"}
+]</pre>
+
+    <h3>Execution flow</h3>
+    <div class="flow">
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Split intent list into <strong>independent</strong> and <strong>dependent</strong> groups</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Independent group submitted to <code>ThreadPoolExecutor</code> — all run concurrently</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Executor waits for all parallel intents to complete</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Dependent intents run one by one, reading <code>context.get_result()</code> from the prior step</span></div>
+    </div>
+
+    <h3>Example chains</h3>
+    <table>
+      <tr><th>Query</th><th>Intents</th><th>Mode</th></tr>
+      <tr><td>"Check my CPU and tell me the weather"</td><td>CPU + WEATHER</td><td>Parallel</td></tr>
+      <tr><td>"Generate a 3D castle and open it"</td><td>GENERATE_MODEL → VIEW_MODEL</td><td>Sequential (chained)</td></tr>
+      <tr><td>"Summarize my clipboard and send it to Tani"</td><td>CLIPBOARD_EXPLAIN → WHATSAPP</td><td>Sequential (chained)</td></tr>
+      <tr><td>"Play Drake, check the weather, and read the news"</td><td>SPOTIFY_PLAY + WEATHER + NEWS</td><td>Parallel</td></tr>
+    </table>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Fallback safety</div>
+      If <code>get_intents()</code> fails to parse valid JSON from Groq, it automatically falls back to <code>get_intent()</code> and wraps the result in a single-item list. NOVA never crashes on a parse failure.
     </div>
   </section>
 
@@ -801,31 +383,43 @@ gemini_api_key = "your_gemini_key"</pre>
   <section class="section" id="structure">
     <div class="section-tag">Architecture</div>
     <h2>Project Structure</h2>
-
     <div class="tree">
       <div><span class="dir">NOVA/</span></div>
       <div>├── <span class="dir">core/</span></div>
-      <div>│   ├── brain.py &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Groq AI, intent detection, summarization</span></div>
+      <div>│   ├── brain.py &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Groq AI, multi-intent parsing, subject extraction</span></div>
+      <div>│   ├── context.py &nbsp;&nbsp;<span class="comment">← IntentContext — shared state between chained handlers</span></div>
       <div>│   ├── memory.py &nbsp;&nbsp;<span class="comment">← Session logging, persistent memory</span></div>
       <div>│   └── voice.py &nbsp;&nbsp;&nbsp;<span class="comment">← speak() and listen()</span></div>
       <div>├── <span class="dir">gui/</span></div>
       <div>│   ├── dashboard.py <span class="comment">← Main CustomTkinter GUI</span></div>
       <div>│   └── settings.py &nbsp;<span class="comment">← Settings window</span></div>
-      <div>├── <span class="dir">modules/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← One file per feature</span></div>
-      <div>│   ├── app_launcher.py</div>
-      <div>│   ├── clipboard.py</div>
-      <div>│   ├── news.py</div>
-      <div>│   ├── reminder.py</div>
-      <div>│   ├── screen_reader.py</div>
-      <div>│   ├── search.py</div>
-      <div>│   ├── spotify.py</div>
-      <div>│   ├── study.py</div>
-      <div>│   ├── system_control.py</div>
-      <div>│   ├── system.py</div>
-      <div>│   ├── voice_note.py</div>
-      <div>│   ├── weather.py</div>
-      <div>│   └── whatsapp.py</div>
-      <div>├── <span class="dir">Images/</span></div>
+      <div>├── <span class="dir">modules/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← One file per feature module</span></div>
+      <div>│   └── (weather, system, search, news, reminder, whatsapp,</div>
+      <div>│   &nbsp;&nbsp;&nbsp;&nbsp;spotify, study, screen_reader, app_launcher,</div>
+      <div>│   &nbsp;&nbsp;&nbsp;&nbsp;system_control, voice_note, clipboard)</div>
+      <div>├── <span class="dir">skills/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Deep integrations with their own runtimes</span></div>
+      <div>│   ├── <span class="dir">facelink/</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Face recognition skill</span></div>
+      <div>│   │   ├── facelink.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← FaceLink class (identify, open_live)</span></div>
+      <div>│   │   ├── detector.py</div>
+      <div>│   │   ├── embedder.py</div>
+      <div>│   │   ├── matcher.py</div>
+      <div>│   │   └── enrollment.py</div>
+      <div>│   ├── <span class="dir">gesture/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Hand-tracking creative suite</span></div>
+      <div>│   │   ├── gesture.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← GestureModule launcher</span></div>
+      <div>│   │   ├── app.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Entry point (--mode --sub --file)</span></div>
+      <div>│   │   ├── HandTracker.py</div>
+      <div>│   │   ├── cubeeditor.py</div>
+      <div>│   │   ├── whiteboard.py</div>
+      <div>│   │   └── shapes3d.py</div>
+      <div>│   └── <span class="dir">model_gen/</span> &nbsp;&nbsp;&nbsp;<span class="comment">← Text-to-3D pipeline</span></div>
+      <div>│   &nbsp;&nbsp;&nbsp;&nbsp;├── model_gen.py &nbsp;&nbsp;&nbsp;<span class="comment">← ModelGenModule</span></div>
+      <div>│   &nbsp;&nbsp;&nbsp;&nbsp;├── generate.py &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Standalone CLI tool</span></div>
+      <div>│   &nbsp;&nbsp;&nbsp;&nbsp;├── drive_client.py</div>
+      <div>│   &nbsp;&nbsp;&nbsp;&nbsp;└── outputs/</div>
+      <div>├── <span class="dir">data/</span></div>
+      <div>│   ├── enrolled_faces.pkl <span class="comment">← FaceLink face database</span></div>
+      <div>│   ├── memory.json &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Auto-generated, never committed</span></div>
+      <div>│   └── outputs/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Generated 3D models land here</span></div>
       <div>├── .env &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Never committed</span></div>
       <div>├── config.py</div>
       <div>├── nova.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">← Entry point</span></div>
@@ -837,31 +431,31 @@ gemini_api_key = "your_gemini_key"</pre>
   <section class="section" id="intent-system">
     <div class="section-tag">Architecture</div>
     <h2>Intent System</h2>
-    <p>Every query goes through <code>brain.get_intent()</code> which sends it to Groq with a classification prompt. Groq returns exactly one intent word. This word is used in <code>nova.py</code> to route to the correct module.</p>
+    <p>Every query goes through <code>brain.get_intents()</code> which sends it to Groq with a structured parsing prompt. Groq returns a JSON array of intent objects. The executor in <code>nova.py</code> dispatches each to its handler function via <code>INTENT_HANDLERS</code> dict.</p>
 
     <table>
-      <tr><th>Intent</th><th>Module</th><th>Example Query</th></tr>
+      <tr><th>Intent</th><th>Handler</th><th>Example Query</th></tr>
       <tr><td>WEATHER</td><td>weather.py</td><td>"What's the weather like?"</td></tr>
       <tr><td>BATTERY / CPU / RAM</td><td>system.py</td><td>"How's my battery?"</td></tr>
-      <tr><td>SEARCH</td><td>search.py</td><td>"Search for Python tutorials"</td></tr>
-      <tr><td>WATCH</td><td>search.py</td><td>"Watch lofi music"</td></tr>
-      <tr><td>WIKIPEDIA</td><td>search.py</td><td>"Tell me about black holes"</td></tr>
+      <tr><td>SEARCH / WATCH / WIKIPEDIA</td><td>search.py</td><td>"Search for Python tutorials"</td></tr>
       <tr><td>NEWS</td><td>news.py</td><td>"What's in the news?"</td></tr>
       <tr><td>REMINDER</td><td>reminder.py</td><td>"Set a reminder"</td></tr>
       <tr><td>WHATSAPP</td><td>whatsapp.py</td><td>"Send a WhatsApp to Mom"</td></tr>
-      <tr><td>SPOTIFY_PLAY/PAUSE/SKIP</td><td>spotify.py</td><td>"Play some Drake"</td></tr>
+      <tr><td>SPOTIFY_PLAY / PAUSE / SKIP</td><td>spotify.py</td><td>"Play some Drake"</td></tr>
       <tr><td>POMODORO / SUMMARIZE / FLASHCARD</td><td>study.py</td><td>"Start a pomodoro"</td></tr>
       <tr><td>SCREEN_READ / EXPLAIN / SUMMARIZE</td><td>screen_reader.py</td><td>"What's on my screen?"</td></tr>
       <tr><td>APP_OPEN</td><td>app_launcher.py</td><td>"Open Chrome"</td></tr>
-      <tr><td>VOLUME_UP / VOLUME_DOWN</td><td>system_control.py</td><td>"Volume up by 20"</td></tr>
-      <tr><td>BRIGHTNESS_SET</td><td>system_control.py</td><td>"Set brightness to 50"</td></tr>
+      <tr><td>VOLUME_UP / VOLUME_DOWN / BRIGHTNESS_SET</td><td>system_control.py</td><td>"Volume up by 20"</td></tr>
       <tr><td>NOTE_ADD / NOTE_READ / NOTE_CLEAR</td><td>voice_note.py</td><td>"Take a note"</td></tr>
-      <tr><td>CLIPBOARD_SUMMARIZE / TRANSLATE / EXPLAIN</td><td>clipboard.py</td><td>"Summarize what I copied"</td></tr>
+      <tr><td>CLIPBOARD_EXPLAIN / TRANSLATE / GET</td><td>clipboard.py</td><td>"Summarize what I copied"</td></tr>
+      <tr><td>DETECT_FACE</td><td>facelink (skill)</td><td>"Who is this?"</td></tr>
+      <tr><td>WHITEBOARD</td><td>gesture (skill)</td><td>"Open whiteboard"</td></tr>
+      <tr><td>VOXEL_EDITOR</td><td>gesture (skill)</td><td>"Open voxel editor"</td></tr>
+      <tr><td>VIEW_MODEL</td><td>gesture (skill)</td><td>"Show me the model"</td></tr>
+      <tr><td>GENERATE_MODEL</td><td>model_gen (skill)</td><td>"Generate a 3D castle"</td></tr>
       <tr><td>SETTINGS</td><td>gui/settings.py</td><td>"Open settings"</td></tr>
       <tr><td>CONVERSATION</td><td>brain.ask()</td><td>Anything else</td></tr>
     </table>
-
-    <p>To add a new intent, add it to the intent list in <code>brain.get_intent()</code>, create your module, and add the <code>elif intent == "YOUR_INTENT"</code> block in <code>nova.py</code>.</p>
   </section>
 
   <!-- MEMORY SYSTEM -->
@@ -869,7 +463,6 @@ gemini_api_key = "your_gemini_key"</pre>
     <div class="section-tag">Architecture</div>
     <h2>Memory System</h2>
     <p>NOVA has persistent memory across sessions. It doesn't store raw logs — it uses Groq to compress conversations into a meaningful summary of who you are.</p>
-
     <div class="flow">
       <div class="flow-step"><span class="flow-arrow">→</span><span>During a session, CONVERSATION exchanges are logged in RAM via <code>memory.log()</code></span></div>
       <div class="flow-step"><span class="flow-arrow">→</span><span>On shutdown, <code>memory.summarize_and_save(brain)</code> sends the log to Groq</span></div>
@@ -877,10 +470,9 @@ gemini_api_key = "your_gemini_key"</pre>
       <div class="flow-step"><span class="flow-arrow">→</span><span>Final summary saved to <code>memory.json</code> — under 150 words</span></div>
       <div class="flow-step"><span class="flow-arrow">→</span><span>Next startup, summary injected into the system prompt so NOVA already knows you</span></div>
     </div>
-
     <div class="callout callout-info">
-      <div class="callout-title">Say "clear your memory"</div>
-      This triggers the FORGET intent which calls <code>memory.clear()</code>, wiping both the session log and <code>memory.json</code>. You can also clear memory from the Settings window.
+      <div class="callout-title">Clear memory</div>
+      Say "clear your memory" or use the Settings window. This wipes both the session log and <code>memory.json</code>.
     </div>
   </section>
 
@@ -890,20 +482,29 @@ gemini_api_key = "your_gemini_key"</pre>
   <section class="section" id="core-modules">
     <div class="section-tag">Modules</div>
     <h2>Core Modules</h2>
-
     <div class="module-grid">
       <div class="module-card">
         <div class="module-card-title">brain.py</div>
-        <p>The AI backbone. Handles intent classification, subject extraction, number extraction, conversation history, and session summarization. Uses Groq's Llama 3.3 70b model.</p>
+        <p>The AI backbone. Handles multi-intent parsing, subject extraction, number extraction, conversation history, and session summarization. Uses Groq's Llama 3.3 70b model.</p>
         <ul class="cmd-list">
-          <li>get_intent(query)</li>
+          <li>get_intents(query) → JSON list</li>
+          <li>get_intent(query) → single fallback</li>
           <li>extract_subject(query, intent)</li>
           <li>extract_number(query, intent)</li>
           <li>ask(user_input)</li>
           <li>summarize(log, old_summary)</li>
         </ul>
       </div>
-
+      <div class="module-card">
+        <div class="module-card-title">context.py</div>
+        <p>The IntentContext object — a shared state container that travels between chained intent handlers. Enables output from one handler (e.g. a file path) to be consumed by the next.</p>
+        <ul class="cmd-list">
+          <li>set(key, value)</li>
+          <li>get(key, default)</li>
+          <li>set_result(value)</li>
+          <li>get_result()</li>
+        </ul>
+      </div>
       <div class="module-card">
         <div class="module-card-title">memory.py</div>
         <p>Manages persistent memory. Logs conversation exchanges during the session and compresses them into a summary on shutdown.</p>
@@ -914,25 +515,12 @@ gemini_api_key = "your_gemini_key"</pre>
           <li>clear()</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">voice.py</div>
         <p>Handles all audio I/O. Speech recognition via Google Speech API, TTS via Microsoft edge_tts with configurable voice and speed.</p>
         <ul class="cmd-list">
           <li>speak(text)</li>
           <li>listen() → query string</li>
-          <li>get_speed() → reads settings.json</li>
-        </ul>
-      </div>
-
-      <div class="module-card">
-        <div class="module-card-title">dashboard.py</div>
-        <p>The main GUI. CustomTkinter window with color-coded chat, animated waveform, status indicator, text input, and system tray integration.</p>
-        <ul class="cmd-list">
-          <li>add_message(sender, text)</li>
-          <li>set_status(value)</li>
-          <li>animate_waveform()</li>
-          <li>handle_input()</li>
         </ul>
       </div>
     </div>
@@ -942,7 +530,6 @@ gemini_api_key = "your_gemini_key"</pre>
   <section class="section" id="system-modules">
     <div class="section-tag">Modules</div>
     <h2>System Modules</h2>
-
     <div class="module-grid">
       <div class="module-card">
         <div class="module-card-title">system.py</div>
@@ -953,7 +540,6 @@ gemini_api_key = "your_gemini_key"</pre>
           <li>"How's my RAM?"</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">system_control.py</div>
         <p>Controls Windows audio via pycaw and screen brightness via screen-brightness-control.</p>
@@ -963,7 +549,6 @@ gemini_api_key = "your_gemini_key"</pre>
           <li>"Set brightness to 50"</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">app_launcher.py</div>
         <p>Opens applications by voice. App paths are configured in the module's apps dictionary.</p>
@@ -973,7 +558,6 @@ gemini_api_key = "your_gemini_key"</pre>
           <li>"Launch Calculator"</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">screen_reader.py</div>
         <p>Takes a screenshot and sends it to Gemini Vision. NOVA describes, explains, or summarizes what's on screen.</p>
@@ -990,7 +574,6 @@ gemini_api_key = "your_gemini_key"</pre>
   <section class="section" id="productivity">
     <div class="section-tag">Modules</div>
     <h2>Productivity</h2>
-
     <div class="module-grid">
       <div class="module-card">
         <div class="module-card-title">reminder.py</div>
@@ -1000,7 +583,6 @@ gemini_api_key = "your_gemini_key"</pre>
           <li>NOVA asks: what + how many minutes</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">study.py</div>
         <p>Study tools — Pomodoro timer, PDF summarizer using PyPDF2 + Groq, and flashcard generator.</p>
@@ -1010,7 +592,6 @@ gemini_api_key = "your_gemini_key"</pre>
           <li>"Generate flashcards"</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">voice_note.py</div>
         <p>Saves spoken notes to notes.json with timestamps. Reads them back on demand.</p>
@@ -1020,14 +601,13 @@ gemini_api_key = "your_gemini_key"</pre>
           <li>"Clear my notes"</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">clipboard.py</div>
-        <p>Reads clipboard content — text or image. Uses Groq for text operations and Gemini Vision for images.</p>
+        <p>Reads clipboard content. Uses Groq for text summarization/translation. Supports CLIPBOARD_GET for passing raw text to chained intents like WHATSAPP.</p>
         <ul class="cmd-list">
           <li>"Summarize what I copied"</li>
           <li>"Translate my clipboard"</li>
-          <li>"Explain this"</li>
+          <li>"Summarize this and send it to Tani"</li>
         </ul>
       </div>
     </div>
@@ -1037,17 +617,15 @@ gemini_api_key = "your_gemini_key"</pre>
   <section class="section" id="media">
     <div class="section-tag">Modules</div>
     <h2>Media & Search</h2>
-
     <div class="module-grid">
       <div class="module-card">
         <div class="module-card-title">weather.py</div>
-        <p>Live weather via Open-Meteo API. No API key required. Uses your configured city name.</p>
+        <p>Live weather via Open-Meteo API. No API key required.</p>
         <ul class="cmd-list">
           <li>"What's the weather?"</li>
           <li>"How's the weather today?"</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">news.py</div>
         <p>Fetches top 5 headlines via NewsAPI. Reads them aloud one by one.</p>
@@ -1056,7 +634,6 @@ gemini_api_key = "your_gemini_key"</pre>
           <li>"Read me the headlines"</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">search.py</div>
         <p>Opens Google, YouTube, or fetches a Wikipedia summary depending on intent.</p>
@@ -1066,7 +643,6 @@ gemini_api_key = "your_gemini_key"</pre>
           <li>"Tell me about black holes"</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">spotify.py</div>
         <p>Controls Spotify via the Spotipy library. Requires Spotify Developer credentials.</p>
@@ -1076,16 +652,137 @@ gemini_api_key = "your_gemini_key"</pre>
           <li>"Skip this song"</li>
         </ul>
       </div>
-
       <div class="module-card">
         <div class="module-card-title">whatsapp.py</div>
-        <p>Sends WhatsApp messages via pywhatkit. Contacts are configured in setup.py and editable in settings.</p>
+        <p>Sends WhatsApp messages via pywhatkit. Supports chaining — if CLIPBOARD_EXPLAIN or a summary runs first, WHATSAPP picks up that output as the message body automatically.</p>
         <ul class="cmd-list">
           <li>"Send a WhatsApp to Mom"</li>
-          <li>NOVA asks: message + recipient</li>
+          <li>"Summarize this and send it to Tani"</li>
         </ul>
       </div>
     </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- FACELINK -->
+  <section class="section" id="facelink">
+    <div class="section-tag">Skills</div>
+    <h2>FaceLink</h2>
+    <p>Real-time face recognition integrated directly into NOVA's process. Uses the <code>face_recognition</code> library (dlib under the hood) with HOG detection and 128-dimensional embeddings.</p>
+
+    <h3>How enrollment works</h3>
+    <p>Faces are enrolled separately and stored as embedding vectors in <code>data/enrolled_faces.pkl</code>. At runtime, FaceLink loads this database once on init. Recognition is cosine similarity matching against the enrolled embeddings.</p>
+
+    <h3>Two modes</h3>
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-card-title">identify() — single frame</div>
+        <p>Opens the webcam, captures one frame, detects all faces, matches against the enrolled database, releases the camera, and returns a list of recognized names to NOVA.</p>
+        <ul class="cmd-list">
+          <li>"Who is this?"</li>
+          <li>"Identify the person in front of me"</li>
+          <li>"Recognize this face"</li>
+        </ul>
+      </div>
+      <div class="module-card">
+        <div class="module-card-title">open_live() — persistent view</div>
+        <p>Runs a full webcam loop in a daemon thread. Draws bounding boxes and name labels on every detected face at 1280×720. Runs every 5th frame for performance. Press Q to close.</p>
+        <ul class="cmd-list">
+          <li>"Open face recognition"</li>
+          <li>"Start facelink"</li>
+          <li>"Live face view"</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Model spoof</div>
+      FaceLink resolves its dlib model files dynamically from the active venv's site-packages at startup using a module-level spoof — no hardcoded paths required.
+    </div>
+  </section>
+
+  <!-- GESTURE SUITE -->
+  <section class="section" id="gesture">
+    <div class="section-tag">Skills</div>
+    <h2>Gesture Suite</h2>
+    <p>A full hand-tracking creative environment launched as a non-blocking subprocess. Built on MediaPipe hand landmarks, rendered via OpenCV at 1280×720.</p>
+
+    <h3>How NOVA launches it</h3>
+    <p><code>GestureModule</code> in <code>gesture.py</code> resolves the absolute path to <code>app.py</code> and spawns it with <code>subprocess.Popen</code>, passing the target mode as arguments. NOVA stays fully responsive while the gesture window is open.</p>
+
+    <pre data-lang="python">gesture.open_whiteboard()       # → app.py --mode whiteboard
+gesture.open_voxel_editor()     # → app.py --mode shapes3d --sub 0
+gesture.open_model(path)        # → app.py --mode shapes3d --sub 2 --file &lt;path&gt;</pre>
+
+    <h3>Tools</h3>
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-card-title">Whiteboard</div>
+        <p>Draw on a virtual canvas with your index finger. Left hand controls brush thickness via pinch spread. Both fists fill the canvas; open hands clear it.</p>
+        <ul class="cmd-list">
+          <li>"Open whiteboard"</li>
+          <li>Swipe down to change brush color</li>
+        </ul>
+      </div>
+      <div class="module-card">
+        <div class="module-card-title">Voxel Editor</div>
+        <p>Build 3D voxel structures by pinching to place the first cube, then pinching with both hands to extend it in any direction. Rotate with index finger, select with cursor gesture.</p>
+        <ul class="cmd-list">
+          <li>"Open voxel editor"</li>
+          <li>Pinch to place, extend, select</li>
+        </ul>
+      </div>
+      <div class="module-card">
+        <div class="module-card-title">3D Shapes Viewer</div>
+        <p>Renders wireframe 3D models. Supports a procedural sphere, Blockbench JSON, and OBJ files loaded via trimesh with automatic polygon decimation for models over 1200 faces.</p>
+        <ul class="cmd-list">
+          <li>"Show me the model"</li>
+          <li>Single finger to rotate</li>
+          <li>Pinch to translate, two hands to scale</li>
+        </ul>
+      </div>
+      <div class="module-card">
+        <div class="module-card-title">Hand Gesture Controls</div>
+        <p>Swipe down (right hand in top zone) to open the sub-option panel. Index + middle finger cursor to hover-select. Swipe up to dismiss. Hover for 2 seconds to confirm selection.</p>
+        <ul class="cmd-list">
+          <li>Swipe down — open panel</li>
+          <li>Index + middle — cursor</li>
+          <li>Hover 2s — select</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODELGEN -->
+  <section class="section" id="modelgen">
+    <div class="section-tag">Skills</div>
+    <h2>ModelGen</h2>
+    <p>Text-to-3D generation via Shap-E running on a Google Colab notebook. Google Drive acts as the message bus between NOVA on your laptop and the Colab runtime.</p>
+
+    <h3>Pipeline</h3>
+    <div class="flow">
+      <div class="flow-step"><span class="flow-arrow">→</span><span>NOVA calls <code>model_gen.generate("castle")</code></span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Prompt sanitized → <code>job_id = "castle"</code></span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Job file uploaded to Google Drive with prompt + format</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Colab notebook picks up the job, runs Shap-E, uploads result OBJ</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span><code>drive_client.poll_for_result()</code> polls Drive until result appears (up to 300s)</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>OBJ downloaded to <code>data/outputs/castle.obj</code>, Drive file deleted</span></div>
+      <div class="flow-step"><span class="flow-arrow">→</span><span>Absolute file path returned to NOVA — or passed directly to <code>gesture.open_model()</code> if chained</span></div>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">Requires active Colab session</div>
+      The Shap-E notebook must be running and watching the Drive folder for jobs. If it's not active, the request will time out after 300 seconds and NOVA will report the error aloud.
+    </div>
+
+    <h3>Chaining with VIEW_MODEL</h3>
+    <p>The most powerful use of NOVA's multi-intent engine — one sentence generates and opens a 3D model:</p>
+    <pre data-lang="text">"Generate a 3D model of a fire hydrant and show it to me"
+
+→ GENERATE_MODEL(subject: "fire hydrant", depends_on: null)
+→ VIEW_MODEL(depends_on: "GENERATE_MODEL")
+   reads file path from IntentContext → gesture.open_model(path)</pre>
   </section>
 
   <hr class="divider">
@@ -1112,6 +809,7 @@ gemini_api_key = "your_gemini_key"</pre>
       <div class="cmd-ref-item"><span class="cmd-text">"Tell me about black holes"</span><span class="cmd-intent">WIKIPEDIA</span></div>
       <div class="cmd-ref-item"><span class="cmd-text">"Search for Python tutorials"</span><span class="cmd-intent">SEARCH</span></div>
       <div class="cmd-ref-item"><span class="cmd-text">"What's on my screen?"</span><span class="cmd-intent">SCREEN_READ</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Check my CPU and tell me the weather"</span><span class="cmd-intent">CPU + WEATHER (parallel)</span></div>
     </div>
 
     <div class="cmd-ref">
@@ -1121,7 +819,8 @@ gemini_api_key = "your_gemini_key"</pre>
       <div class="cmd-ref-item"><span class="cmd-text">"Read my notes"</span><span class="cmd-intent">NOTE_READ</span></div>
       <div class="cmd-ref-item"><span class="cmd-text">"Start a pomodoro for 25 minutes"</span><span class="cmd-intent">POMODORO</span></div>
       <div class="cmd-ref-item"><span class="cmd-text">"Generate flashcards"</span><span class="cmd-intent">FLASHCARD</span></div>
-      <div class="cmd-ref-item"><span class="cmd-text">"Summarize what I copied"</span><span class="cmd-intent">CLIPBOARD_SUMMARIZE</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Summarize what I copied"</span><span class="cmd-intent">CLIPBOARD_EXPLAIN</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Summarize this and send it to Tani"</span><span class="cmd-intent">CLIPBOARD_EXPLAIN → WHATSAPP</span></div>
     </div>
 
     <div class="cmd-ref">
@@ -1134,9 +833,20 @@ gemini_api_key = "your_gemini_key"</pre>
     </div>
 
     <div class="cmd-ref">
+      <div class="cmd-ref-header">Skills</div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Who is this?"</span><span class="cmd-intent">DETECT_FACE</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Open face recognition"</span><span class="cmd-intent">DETECT_FACE (live)</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Open whiteboard"</span><span class="cmd-intent">WHITEBOARD</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Open voxel editor"</span><span class="cmd-intent">VOXEL_EDITOR</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Generate a 3D model of a fire hydrant"</span><span class="cmd-intent">GENERATE_MODEL</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Generate a 3D castle and show it to me"</span><span class="cmd-intent">GENERATE_MODEL → VIEW_MODEL</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Show me the model"</span><span class="cmd-intent">VIEW_MODEL</span></div>
+    </div>
+
+    <div class="cmd-ref">
       <div class="cmd-ref-header">NOVA Control</div>
       <div class="cmd-ref-item"><span class="cmd-text">"Open settings"</span><span class="cmd-intent">SETTINGS</span></div>
-      <div class="cmd-ref-item"><span class="cmd-text">"Clear your memory"</span><span class="cmd-intent">FORGET</span></div>
+      <div class="cmd-ref-item"><span class="cmd-text">"Clear your memory"</span><span class="cmd-intent">CONVERSATION → memory.clear()</span></div>
       <div class="cmd-ref-item"><span class="cmd-text">"Goodbye" / "Exit" / "Quit"</span><span class="cmd-intent">SHUTDOWN</span></div>
     </div>
   </section>
@@ -1145,35 +855,14 @@ gemini_api_key = "your_gemini_key"</pre>
   <section class="section" id="api-keys">
     <div class="section-tag">Reference</div>
     <h2>API Keys</h2>
-
     <table>
       <tr><th>Service</th><th>Used For</th><th>Where to Get</th><th>Cost</th></tr>
-      <tr>
-        <td>Groq</td>
-        <td>AI brain, intent routing, summarization</td>
-        <td>console.groq.com</td>
-        <td><span class="badge badge-free">FREE</span></td>
-      </tr>
-      <tr>
-        <td>Gemini</td>
-        <td>Screen reader, clipboard image analysis</td>
-        <td>aistudio.google.com</td>
-        <td><span class="badge badge-free">FREE</span></td>
-      </tr>
-      <tr>
-        <td>NewsAPI</td>
-        <td>News headlines</td>
-        <td>newsapi.org</td>
-        <td><span class="badge badge-free">FREE</span></td>
-      </tr>
-      <tr>
-        <td>Spotify</td>
-        <td>Music playback control</td>
-        <td>developer.spotify.com</td>
-        <td><span class="badge badge-optional">OPTIONAL</span></td>
-      </tr>
+      <tr><td>Groq</td><td>AI brain, intent routing, summarization</td><td>console.groq.com</td><td><span class="badge badge-free">FREE</span></td></tr>
+      <tr><td>Gemini</td><td>Screen reader, clipboard vision</td><td>aistudio.google.com</td><td><span class="badge badge-free">FREE</span></td></tr>
+      <tr><td>NewsAPI</td><td>News headlines</td><td>newsapi.org</td><td><span class="badge badge-free">FREE</span></td></tr>
+      <tr><td>Spotify</td><td>Music playback control</td><td>developer.spotify.com</td><td><span class="badge badge-optional">OPTIONAL</span></td></tr>
+      <tr><td>Google Drive OAuth</td><td>ModelGen skill — job queue</td><td>console.cloud.google.com</td><td><span class="badge badge-optional">OPTIONAL</span></td></tr>
     </table>
-
     <div class="callout callout-info">
       <div class="callout-title">No API key for Weather</div>
       The Weather module uses Open-Meteo which is completely free and requires no API key or signup.
@@ -1184,7 +873,6 @@ gemini_api_key = "your_gemini_key"</pre>
   <section class="section" id="gui">
     <div class="section-tag">Reference</div>
     <h2>GUI Guide</h2>
-
     <table>
       <tr><th>Element</th><th>Description</th></tr>
       <tr><td>Chat Window</td><td>NOVA messages in cyan, your messages in white. Auto-scrolls to latest.</td></tr>
@@ -1192,7 +880,7 @@ gemini_api_key = "your_gemini_key"</pre>
       <tr><td>Waveform</td><td>Animated bars that pulse when NOVA is actively listening</td></tr>
       <tr><td>Text Input</td><td>Type and press Enter to send. Shift+Enter for a new line.</td></tr>
       <tr><td>System Tray</td><td>Closing the window minimizes to tray — NOVA keeps running. Right-click for options.</td></tr>
-      <tr><td>Settings</td><td>Say "open settings" or access via tray. Clear memory, adjust voice speed, manage contacts.</td></tr>
+      <tr><td>Settings</td><td>Say "open settings" or access via tray. Clear memory, adjust voice speed, manage contacts, clear notes.</td></tr>
     </table>
   </section>
 
@@ -1200,35 +888,35 @@ gemini_api_key = "your_gemini_key"</pre>
   <section class="section" id="contributing">
     <div class="section-tag">Reference</div>
     <h2>Contributing</h2>
-    <p>Adding a new module to NOVA is straightforward. Every module follows the same pattern:</p>
+    <p>Adding a new module or skill to NOVA follows a consistent pattern. Every handler is a standalone function registered in the <code>INTENT_HANDLERS</code> dict.</p>
 
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-content">
-          <h3>Create your module file</h3>
-          <p>Add a new file in <code>modules/</code>. Create a class with an <code>__init__</code> and the methods you need.</p>
+          <h3>Create your module or skill file</h3>
+          <p>Add a new file in <code>modules/</code> (simple feature) or <code>skills/</code> (complex integration with its own runtime). Create a class with an <code>__init__</code> and the methods you need.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-content">
-          <h3>Add your intent to brain.py</h3>
-          <p>Add your new intent word to the list inside <code>get_intent()</code>'s prompt so Groq knows it exists.</p>
+          <h3>Add your intents to brain.py</h3>
+          <p>Add your new intent word(s) to the valid intent list inside both <code>get_intent()</code> and <code>get_intents()</code> prompts. Add an example query to the few-shot examples in <code>get_intents()</code> if the intent has unusual chaining behavior.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-content">
-          <h3>Import and initialize in nova.py</h3>
-          <p>Import your module at the top and initialize it in the <code>main()</code> function alongside the others.</p>
+          <h3>Write a handler function in nova.py</h3>
+          <p>Create a <code>handle_your_feature(query, context, ...)</code> function at module level. It should call your module, put results in <code>message_queue</code>, call <code>voice.speak()</code>, and optionally call <code>context.set_result()</code> if the output should be consumed by a downstream intent.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">4</div>
         <div class="step-content">
-          <h3>Add the intent handler</h3>
-          <p>Add an <code>elif intent == "YOUR_INTENT":</code> block in the main loop in <code>nova.py</code>. Call your module, put the result in <code>message_queue</code>, and call <code>voice.speak()</code>.</p>
+          <h3>Register in INTENT_HANDLERS</h3>
+          <p>Add a lambda to the <code>INTENT_HANDLERS</code> dict inside <code>main()</code> mapping your intent string to your handler function. The executor picks it up automatically — no changes to the main loop needed.</p>
         </div>
       </div>
     </div>
@@ -1242,10 +930,8 @@ gemini_api_key = "your_gemini_key"</pre>
 </main>
 
 <script>
-  // Active nav highlighting on scroll
   const sections = document.querySelectorAll('.section[id]');
   const navItems = document.querySelectorAll('.nav-item');
-
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -1255,7 +941,6 @@ gemini_api_key = "your_gemini_key"</pre>
       }
     });
   }, { threshold: 0.3 });
-
   sections.forEach(s => observer.observe(s));
 </script>
 
