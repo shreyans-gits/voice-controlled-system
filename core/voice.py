@@ -12,7 +12,6 @@ class Voice:
     def __init__(self):
         self.recognizer = sr.Recognizer()
         self.recognizer.pause_threshold = 1
-        # FIXED: Initialize a mutual exclusion lock to safeguard the audio hardware device
         self.audio_lock = threading.Lock()
 
     def get_speed(self):

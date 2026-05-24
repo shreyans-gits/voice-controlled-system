@@ -435,13 +435,16 @@ def main(dashboard,message_queue,input_queue):
     message_queue.put({"type": "status", "value": "LISTENING"})
 
     while True:
-        query = ""
         message_queue.put({"type": "status", "value": "LISTENING"})
-        
+        query = ""
         voice_result = [None]
-        def do_listen():
-            voice_result[0] = voice.listen()
         
+        def do_listen():
+            try:
+                voice_result[0] = voice.listen()
+            except Exception as e:
+                print(f"[Voice Thread Error] {e}")
+                
         listen_thread = threading.Thread(target=do_listen, daemon=True)
         listen_thread.start()
         
@@ -450,12 +453,16 @@ def main(dashboard,message_queue,input_queue):
                 msg = input_queue.get_nowait()
                 query = msg["text"]
                 break
-            except:
+            except queue.Empty:
                 time.sleep(0.1)
-        
+                
         if not query:
             listen_thread.join()
             query = voice_result[0]
+
+        if not query or not query.strip():
+            print("[System Info] Empty or silent input detected. Skipping pipeline loop.")
+            continue
 
         message_queue.put({"type": "message", "sender": "You", "text": query})
         message_queue.put({"type": "status", "value": "THINKING"})
