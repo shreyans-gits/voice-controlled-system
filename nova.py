@@ -1,3 +1,6 @@
+import uvicorn
+from core.server import app, initialize_server_bridges, dispatch_network_response, _response_slots
+
 import datetime
 import time
 import threading
@@ -434,9 +437,20 @@ def main(dashboard,message_queue,input_queue):
     voice.speak(greet())
     message_queue.put({"type": "status", "value": "LISTENING"})
 
+    print("[System Engine] Launching asynchronous local web server...")
+    initialize_server_bridges(input_queue)
+    
+    def run_web_server():
+        uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
+        
+    server_thread = threading.Thread(target=run_web_server, daemon=True)
+    server_thread.start()
+    print("[System Engine] FastAPI server online at http://localhost:8000")
+
     while True:
         message_queue.put({"type": "status", "value": "LISTENING"})
         query = ""
+        current_request_context = {"origin": "local", "request_id": None}
         voice_result = [None]
         
         def do_listen():
@@ -452,6 +466,8 @@ def main(dashboard,message_queue,input_queue):
             try:
                 msg = input_queue.get_nowait()
                 query = msg["text"]
+                current_request_context["origin"] = msg.get("origin", "local")
+                current_request_context["request_id"] = msg.get("request_id", None)
                 break
             except queue.Empty:
                 time.sleep(0.1)
@@ -461,7 +477,6 @@ def main(dashboard,message_queue,input_queue):
             query = voice_result[0]
 
         if not query or not query.strip():
-            print("[System Info] Empty or silent input detected. Skipping pipeline loop.")
             continue
 
         message_queue.put({"type": "message", "sender": "You", "text": query})
@@ -480,6 +495,8 @@ def main(dashboard,message_queue,input_queue):
         else:
             intent_list = brain.get_intents(query)
             context = IntentContext()
+
+            execution_outputs = []
 
             def safe_speak(handler_func, *args, **kwargs):
                 return handler_func(*args, **kwargs)
@@ -536,6 +553,8 @@ def main(dashboard,message_queue,input_queue):
             independent = [i for i in intent_list if not i.get("depends_on")]
             dependent = [i for i in intent_list if i.get("depends_on")]
 
+            execution_outputs = []
+
             if independent:
                 with ThreadPoolExecutor() as executor:
                     futures = {}
@@ -546,28 +565,45 @@ def main(dashboard,message_queue,input_queue):
 
                     for intent_name, future in futures.items():
                         try:
-                            future.result()
+                            handler_result = future.result()
+                            if isinstance(handler_result, str):
+                                execution_outputs.append(handler_result)
                         except Exception as thread_ex:
                             print(f"[Thread Error] Exception thrown in parallel intent {intent_name}: {thread_ex}")
 
             for item in dependent:
                 intent_name = item["intent"]
                 if intent_name in INTENT_HANDLERS:
-                    INTENT_HANDLERS[intent_name](item, query, context)
+                    dep_result = INTENT_HANDLERS[intent_name](item, query, context)
+                    if isinstance(dep_result, str):
+                        execution_outputs.append(dep_result)
+
+            response_payload = ""
+            if execution_outputs:
+                response_payload = "\n".join(str(o) for o in execution_outputs if o)
+            else:
+                response_payload = "Automation task processed successfully."
+
+            if current_request_context["origin"] == "network" and current_request_context["request_id"]:
+                req_id = current_request_context["request_id"]
+                from core.server import _response_slots
+                if req_id in _response_slots:
+                    _response_slots[req_id].put(response_payload)
+                    print(f"[System Engine] Network response dispatched cleanly for request: {req_id}")
 
             message_queue.put({"type": "status", "value": "LISTENING"})
 
 if __name__ == "__main__":
     message_queue = queue.Queue()
     input_queue = queue.Queue()
-    app = Dashboard(message_queue, input_queue)
+    gui_dashboard = Dashboard(message_queue, input_queue)
     
     nova_thread = threading.Thread(
         target=main, 
-        args=(app, message_queue, input_queue),
+        args=(gui_dashboard, message_queue, input_queue),
         daemon=True
     )
     nova_thread.start()
 
-    app.check_queue(message_queue)
-    app.mainloop()
+    gui_dashboard.check_queue(message_queue)
+    gui_dashboard.mainloop()
