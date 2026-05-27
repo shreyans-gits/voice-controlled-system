@@ -8,7 +8,6 @@ import httpx
 import threading
 import mobile_config
 
-# 🔗 CONFIGURATION: Point this directly to your laptop's permanent network bridge!
 LAPTOP_TAILSCALE_IP = mobile_config.LAPTOP_TAILSCALE_IP
 API_URL = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/query"
 
@@ -18,13 +17,10 @@ class MobilePortalLayout(MDBoxLayout):
         self.orientation = "vertical"
         self.spacing = "20dp"
         
-        # 1. Top Navigation bar
         self.add_widget(MDTopAppBar(title="N.O.V.A. Mobile", anchor_title="center", elevation=4))
         
-        # Content padding layout container
         content = MDBoxLayout(orientation="vertical", spacing="15dp", padding="20dp")
         
-        # 2. Response Screen Display (Where NOVA talks back)
         self.response_label = MDLabel(
             text="System Status: Connected to Core Network\n\nWaiting for input command...",
             halign="center",
@@ -33,7 +29,6 @@ class MobilePortalLayout(MDBoxLayout):
         )
         content.add_widget(self.response_label)
         
-        # 3. Text Input field for commands
         self.input_field = MDTextField(
             hint_text="Type command or query...",
             helper_text="Example: check my ram system metrics",
@@ -42,7 +37,6 @@ class MobilePortalLayout(MDBoxLayout):
         )
         content.add_widget(self.input_field)
         
-        # 4. Action Button
         self.submit_btn = MDRaisedButton(
             text="TRANSMIT COMMAND",
             pos_hint={"center_x": 0.5},
@@ -62,16 +56,13 @@ class MobilePortalLayout(MDBoxLayout):
         self.response_label.text = "Transmitting to laptop core matrix..."
         self.input_field.text = ""
         
-        # Run network connection asynchronously 
         threading.Thread(target=self.fire_rest_api, args=(query_text,), daemon=True).start()
 
     def fire_rest_api(self, text):
         try:
-            # Send the standard JSON payload over Tailscale
             response = httpx.post(API_URL, json={"text": text}, timeout=30.0)
             if response.status_code == 200:
                 result_json = response.json()
-                # Update the phone screen text with the real laptop output!
                 self.response_label.text = f"N.O.V.A. Response:\n\n{result_json.get('text', '')}"
             else:
                 self.response_label.text = f"Network Server Error: Status Code {response.status_code}"
