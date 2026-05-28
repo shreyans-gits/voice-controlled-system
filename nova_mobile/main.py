@@ -69,7 +69,7 @@ class DashboardScreen(Screen):
 
     def toggle_microphone_state(self, instance):
         if self.app.is_muted:
-            # Unmute and spin up continuous automation logic
+            # Unmute phone app -> Mute the laptop's local mic!
             self.app.is_muted = False
             self.mic_btn.icon = "microphone"
             self.mic_btn.icon_color = (0, 0.8, 1, 1)
@@ -78,15 +78,17 @@ class DashboardScreen(Screen):
             self.status_lbl.theme_text_color = "Custom"
             self.status_lbl.text_color = (0, 0.8, 1, 1)
             self.app.start_listening_loop()
+            self.app.sync_laptop_mic_state(mute=True)
         else:
-            # Drop into hard standby (Football mode)
+            # Mute phone app -> Wake back up the laptop's local mic!
             self.app.is_muted = True
             self.mic_btn.icon = "microphone-off"
             self.mic_btn.icon_color = (1, 0.3, 0.3, 1)
             self.mic_btn.md_bg_color = (0.2, 0.2, 0.25, 1)
             self.status_lbl.text = "MIC MUTED"
             self.status_lbl.theme_text_color = "Error"
-            self.chat_feed.text += "\n\n[Microphone arrays deactivated safely]"
+            self.chat_feed.text += "\n\n[Microphone arrays deactivated safely]"            
+            self.app.sync_laptop_mic_state(mute=False)
 
 
 class SettingsScreen(Screen):
@@ -250,6 +252,16 @@ class NovaMobileApp(MDApp):
             self.dashboard.status_lbl.text = "LISTENING (HANDS-FREE)"
             self.dashboard.status_lbl.text_color = (0, 0.8, 1, 1)
             self.start_listening_loop()
+
+    def sync_laptop_mic_state(self, mute):
+        def async_sync():
+            try:
+                url = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/toggle_local_mic"
+                httpx.post(url, json={"mute": mute}, timeout=3.0)
+            except Exception as e:
+                print(f"[Sync Warning] Could not reach laptop mic gate: {e}")
+                
+        threading.Thread(target=async_sync, daemon=True).start()
 
 if __name__ == "__main__":
     NovaMobileApp().run()
