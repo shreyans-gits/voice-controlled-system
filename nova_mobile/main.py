@@ -16,48 +16,84 @@ from kivymd.uix.toolbar import MDTopAppBar
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.clock import Clock
 
-# Import secure absolute routing parameters
 from mobile_config import API_URL, LAPTOP_TAILSCALE_IP
+
+from kivymd.uix.card import MDCard
+from kivy.uix.scrollview import ScrollView
+
+class ChatBubble(MDCard):
+    def __init__(self, text, is_user=True, **kwargs):
+        super().__init__(**kwargs)
+        self.size_hint_y = None
+        self.radius = [15, 15, 0, 15] if is_user else [15, 15, 15, 0]
+        self.md_bg_color = (0, 0.3, 0.6, 0.8) if is_user else (0.15, 0.15, 0.2, 0.9)
+        self.padding = "12dp"
+        self.margin = [10, 5, 10, 5]
+        
+        # Determine screen horizontal alignment based on sender identity
+        self.pos_hint = {"right": 0.98} if is_user else {"left": 0.02}
+        
+        lbl = MDLabel(
+            text=text,
+            theme_text_color="Primary",
+            font_style="Body1",
+            size_hint_y=None,
+            halign="left"
+        )
+        lbl.bind(texture_size=lbl.setter('size'))
+        self.bind(minimum_height=self.setter('height'))
+        self.add_widget(lbl)
+
 
 class DashboardScreen(Screen):
     def __init__(self, app_instance, **kwargs):
         super().__init__(**kwargs)
         self.app = app_instance
         
-        layout = MDBoxLayout(orientation="vertical")
+        layout = MDBoxLayout(orientation="vertical", md_bg_color=(0.05, 0.05, 0.08, 1))
+        
         layout.add_widget(MDTopAppBar(
             title="NOVA Core Cockpit", 
             anchor_title="center", 
             elevation=4,
+            md_bg_color=(0.08, 0.08, 0.12, 1),
             right_action_items=[["cog", lambda x: self.app.switch_screen("settings")]]
         ))
         
-        # Conversation Panel
-        scroll = MDScrollView(do_scroll_x=False)
-        self.chat_feed = MDLabel(
-            text="[System Core Ready]\nMic Status: Muted by default.\nTap the array below to unlock hands-free communication.",
-            halign="center",
-            theme_text_color="Secondary",
-            font_style="Body1",
-            size_hint_y=None,
-            padding=("10dp", "10dp")
+        self.scroll_view = ScrollView(do_scroll_x=False, size_hint=(1, 1))
+        self.chat_container = MDBoxLayout(
+            orientation="vertical", 
+            spacing="12dp", 
+            padding="15dp", 
+            size_hint_y=None
         )
-        self.chat_feed.bind(texture_size=self.chat_feed.setter('size'))
-        scroll.add_widget(self.chat_feed)
-        layout.add_widget(scroll)
+        self.chat_container.bind(minimum_height=self.chat_container.setter('height'))
+        self.scroll_view.add_widget(self.chat_container)
+        layout.add_widget(self.scroll_view)        
+        self.add_bubble_to_ui("System Core Connected. Hands-free audio monitoring matrix online.", is_user=False)
         
-        # Core Interface Controller: Giant Microphone Status Panel
-        control_panel = MDBoxLayout(orientation="vertical", spacing="10dp", padding="20dp", size_hint_y=None, height="220dp")
+        control_panel = MDBoxLayout(
+            orientation="vertical", 
+            spacing="8dp", 
+            padding=["20dp", "10dp", "20dp", "20dp"], 
+            size_hint_y=None, 
+            height="180dp",
+            md_bg_color=(0.08, 0.08, 0.12, 1)
+        )
         
-        self.status_lbl = MDLabel(text="MIC MUTED", halign="center", font_style="H6", theme_text_color="Error")
+        self.status_lbl = MDLabel(
+            text="MIC MUTED", 
+            halign="center", 
+            font_style="Button", 
+            theme_text_color="Error"
+        )
         control_panel.add_widget(self.status_lbl)
         
-        # Giant Toggle Button
         self.mic_btn = MDIconButton(
             icon="microphone-off",
-            icon_size="70dp",
+            icon_size="55dp",
             pos_hint={"center_x": 0.5},
-            md_bg_color=(0.2, 0.2, 0.25, 1),
+            md_bg_color=(0.18, 0.18, 0.22, 1),
             theme_icon_color="Custom",
             icon_color=(1, 0.3, 0.3, 1)
         )
@@ -67,9 +103,14 @@ class DashboardScreen(Screen):
         layout.add_widget(control_panel)
         self.add_widget(layout)
 
+    def add_bubble_to_ui(self, text, is_user=True):
+        bubble = ChatBubble(text=text, is_user=is_user)
+        bubble.size_hint_x = 0.75 
+        self.chat_container.add_widget(bubble)
+        Clock.schedule_once(lambda dt: setattr(self.scroll_view, 'scroll_y', 0), 0.1)
+
     def toggle_microphone_state(self, instance):
         if self.app.is_muted:
-            # Unmute phone app -> Mute the laptop's local mic!
             self.app.is_muted = False
             self.mic_btn.icon = "microphone"
             self.mic_btn.icon_color = (0, 0.8, 1, 1)
@@ -80,14 +121,13 @@ class DashboardScreen(Screen):
             self.app.start_listening_loop()
             self.app.sync_laptop_mic_state(mute=True)
         else:
-            # Mute phone app -> Wake back up the laptop's local mic!
             self.app.is_muted = True
             self.mic_btn.icon = "microphone-off"
             self.mic_btn.icon_color = (1, 0.3, 0.3, 1)
-            self.mic_btn.md_bg_color = (0.2, 0.2, 0.25, 1)
+            self.mic_btn.md_bg_color = (0.18, 0.18, 0.22, 1)
             self.status_lbl.text = "MIC MUTED"
             self.status_lbl.theme_text_color = "Error"
-            self.chat_feed.text += "\n\n[Microphone arrays deactivated safely]"            
+            self.add_bubble_to_ui("Microphone array paused.", is_user=False)
             self.app.sync_laptop_mic_state(mute=False)
 
 
@@ -233,12 +273,20 @@ class NovaMobileApp(MDApp):
                     
                 if response.status_code == 200:
                     res_data = response.json()
-                    text_update = f"\n\nYou: {res_data.get('query','')}\nNOVA: {res_data.get('text','')}"
-                    Clock.schedule_once(lambda dt: self.update_chat_ui(text_update), 0)
+                    user_speech = res_data.get('query', '')
+                    nova_reply = res_data.get('text', '')
+                    
+                    if user_speech:
+                        Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(user_speech, is_user=True), 0)
+                    if nova_reply:
+                        Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(nova_reply, is_user=False), 0)
                 else:
-                    Clock.schedule_once(lambda dt: self.update_chat_ui(f"\n\n[Server returned HTTP code {response.status_code}]"), 0)
+                    err_msg = f"System Error: Server returned HTTP code {response.status_code}"
+                    Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(err_msg, is_user=False), 0)
             except Exception as e:
-                Clock.schedule_once(lambda dt: self.update_chat_ui(f"\n\n[Bridge failure: {e}]"), 0)
+                error_string = str(e)
+                ui_error_msg = f"Network Bridge Failure: {error_string}"
+                Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(ui_error_msg, is_user=False), 0)
             finally:
                 Clock.schedule_once(lambda dt: self.reset_dashboard_state(), 0)
                 
