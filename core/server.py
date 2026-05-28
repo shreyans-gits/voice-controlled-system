@@ -141,13 +141,30 @@ async def process_mobile_audio(file: UploadFile = File(...), background_tasks: B
         with open(temp_audio_path, "wb") as f:
             f.write(await file.read())
             
+        import speech_recognition as sr
+        import config
         from core.voice import Voice
+        
         voice_engine = Voice()
+        transcribed_query = ""
 
-        if hasattr(voice_engine, "transcribe_file"):
-            transcribed_query = voice_engine.transcribe_file(temp_audio_path)
-        else:
-            transcribed_query = "" 
+        if os.path.exists(temp_audio_path):
+            with sr.AudioFile(temp_audio_path) as source:
+                print("[Server STT] Extracting audio data from mobile payload cache...")
+                audio_data = voice_engine.recognizer.record(source)
+                try:
+                    transcribed_query = voice_engine.recognizer.recognize_google(
+                        audio_data, 
+                        language=config.TTS_LANGUAGE
+                    ).lower()
+                    print(f"[Server STT] Transcribed Mobile Input: '{transcribed_query}'")
+                except sr.UnknownValueError:
+                    print("[Server STT] Google engine could not decipher audio data matrix.")
+                except sr.RequestError as e:
+                    print(f"[Server STT] API service connection drop: {e}")
+
+        try: os.remove(temp_audio_path)
+        except: pass
             
         if not transcribed_query or not transcribed_query.strip():
             return {"status": "error", "text": "Could not decipher speech inputs."}
