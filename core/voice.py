@@ -56,6 +56,13 @@ class Voice:
                 print(f"[Voice Cleanup Warning] Could not remove temp file: {e}")
 
     def listen(self):
+        import sys
+        main_module = sys.modules.get('__main__')
+        if main_module and getattr(main_module, 'local_mic_muted', False):
+            import time
+            time.sleep(0.5)
+            return ""
+        
         with sr.Microphone() as source:
             print("Listening...")
             self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
