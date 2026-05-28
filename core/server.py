@@ -116,11 +116,24 @@ def wipe_system_memory():
     memory.clear()
     return {"status": "success", "message": "Memory cores cleared."}
 
+@router.post("/toggle_local_mic")
+async def toggle_local_mic(payload: dict):
+    import sys
+    main_module = sys.modules.get('__main__')
+    
+    mute_status = payload.get("mute", False)
+    if main_module and hasattr(main_module, "local_mic_muted"):
+        main_module.local_mic_muted = mute_status
+        state_str = "MUTED" if mute_status else "ACTIVE"
+        print(f"[System Core] Laptop hardware mic state switched to: {state_str}")
+        return {"status": "success", "local_mic_muted": mute_status}
+        
+    return {"status": "error", "message": "Core lifecycle reference unavailable."}
+
 # MOBILE REMOTE AUDIO PROCESSING PIPELINE
 
 @router.post("/process_audio")
 async def process_mobile_audio(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
-    """Receives voice recordings from phone mic, transcribes, and runs via intent graph."""
     global _input_queue, _response_slots
     try:
         temp_audio_path = f"data/outputs/mobile_incoming_{file.filename}"
