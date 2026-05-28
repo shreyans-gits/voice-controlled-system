@@ -263,5 +263,14 @@ class NovaMobileApp(MDApp):
                 
         threading.Thread(target=async_sync, daemon=True).start()
 
+    def on_stop(self):
+        print("[Mobile App] Shutting down. Restoring laptop microphone arrays...")
+        try:
+            url = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/toggle_local_mic"
+            import requests
+            requests.post(url, json={"mute": False}, timeout=2.0)
+        except Exception as e:
+            print(f"[Exit Sync Failed] Could not restore laptop mic: {e}")
+
 if __name__ == "__main__":
     NovaMobileApp().run()
