@@ -24,25 +24,32 @@ from kivy.uix.scrollview import ScrollView
 class ChatBubble(MDCard):
     def __init__(self, text, is_user=True, **kwargs):
         super().__init__(**kwargs)
-        self.size_hint_y = None
+        self.size_hint = (None, None)
         self.radius = [15, 15, 0, 15] if is_user else [15, 15, 15, 0]
-        self.md_bg_color = (0, 0.3, 0.6, 0.8) if is_user else (0.15, 0.15, 0.2, 0.9)
-        self.padding = "12dp"
-        self.margin = [10, 5, 10, 5]
+        self.md_bg_color = (0, 0.25, 0.5, 0.9) if is_user else (0.14, 0.14, 0.18, 0.95)
+        self.elevation = 1
         
-        # Determine screen horizontal alignment based on sender identity
+        from kivy.core.window import Window
+        self.width = min(450, 0.75 * Window.width)
         self.pos_hint = {"right": 0.98} if is_user else {"left": 0.02}
         
-        lbl = MDLabel(
+        box = MDBoxLayout(orientation="vertical", padding=15, size_hint=(1, 1))
+        
+        self.lbl = MDLabel(
             text=text,
             theme_text_color="Primary",
             font_style="Body1",
             size_hint_y=None,
             halign="left"
         )
-        lbl.bind(texture_size=lbl.setter('size'))
-        self.bind(minimum_height=self.setter('height'))
-        self.add_widget(lbl)
+        self.lbl.bind(width=lambda instance, val: setattr(instance, 'text_size', (val, None)))
+        self.lbl.bind(texture_size=self.adjust_bubble_height)
+        
+        box.add_widget(self.lbl)
+        self.add_widget(box)
+
+    def adjust_bubble_height(self, instance, texture_size):
+        self.height = texture_size[1] + 30
 
 
 class DashboardScreen(Screen):
@@ -288,7 +295,12 @@ class NovaMobileApp(MDApp):
                 ui_error_msg = f"Network Bridge Failure: {error_string}"
                 Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(ui_error_msg, is_user=False), 0)
             finally:
-                Clock.schedule_once(lambda dt: self.reset_dashboard_state(), 0)
+                try:
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                except: pass
+                
+                Clock.schedule_once(lambda dt: self.reset_dashboard_state(), 1.0)
                 
         threading.Thread(target=async_post, daemon=True).start()
 
@@ -319,6 +331,16 @@ class NovaMobileApp(MDApp):
             requests.post(url, json={"mute": False}, timeout=2.0)
         except Exception as e:
             print(f"[Exit Sync Failed] Could not restore laptop mic: {e}")
+
+    def reset_dashboard_state(self):
+        if not self.is_muted:
+            self.dashboard.status_lbl.text = "LISTENING (HANDS-FREE)"
+            self.dashboard.status_lbl.text_color = (0, 0.8, 1, 1)
+
+            def delayed_restart(dt):
+                if not self.is_muted:
+                    self.start_listening_loop()
+            Clock.schedule_once(delayed_restart, 0.3)
 
 if __name__ == "__main__":
     NovaMobileApp().run()
