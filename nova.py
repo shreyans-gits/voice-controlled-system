@@ -447,6 +447,9 @@ def main(dashboard,message_queue,input_queue):
     server_thread.start()
     print("[System Engine] FastAPI server online at http://localhost:8000")
 
+    global local_mic_muted
+    local_mic_muted = False
+
     while True:
         message_queue.put({"type": "status", "value": "LISTENING"})
         query = ""
@@ -455,6 +458,10 @@ def main(dashboard,message_queue,input_queue):
         
         def do_listen():
             try:
+                if local_mic_muted:
+                    time.sleep(0.5)
+                    voice_result[0] = ""
+                    return
                 voice_result[0] = voice.listen()
             except Exception as e:
                 print(f"[Voice Thread Error] {e}")
