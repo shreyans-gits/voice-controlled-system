@@ -241,7 +241,7 @@ class DashboardScreen(Screen):
             self.status_lbl.theme_text_color = "Error"
             self.add_bubble_to_ui("Microphone paused.", is_user=False)
             self.app.sync_laptop_mic_state(mute=False)
-
+            
     def toggle_reverse_video_stream(self, instance):
         if not getattr(self.app, 'reverse_stream_active', False):
             self.app.reverse_stream_active = True
@@ -258,10 +258,9 @@ class DashboardScreen(Screen):
             def run_server_stop():
                 try:
                     import httpx
-                    httpx.post(f"http://{self.app.settings_screen.app.LAPTOP_TAILSCALE_IP}:8000/api/mobile/stop_feed", timeout=2.0)
-                except:
-                    pass
-            import threading
+                    httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/stop_feed", timeout=2.0)
+                except Exception as e:
+                    print(f"Stop feed warning: {e}")
             threading.Thread(target=run_server_stop, daemon=True).start()
 
 
