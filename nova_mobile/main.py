@@ -24,6 +24,72 @@ from kivy.uix.scrollview import ScrollView
 
 from mobile_config import API_URL, LAPTOP_TAILSCALE_IP
 
+from kivy.uix.image import Image
+from kivy.graphics.texture import Texture
+import io
+from PIL import Image as PILImage
+
+class LiveMJPEGViewer(Image):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.stream_thread = None
+        self.running = False
+
+    def start_stream(self, url):
+        if self.running:
+            return
+        self.running = True
+        self.stream_thread = threading.Thread(target=self._consume_stream, args=(url,), daemon=True)
+        self.stream_thread.start()
+
+    def stop_stream(self):
+        self.running = False
+        if self.stream_thread:
+            self.stream_thread.join(timeout=1.0)
+        Clock.schedule_once(lambda dt: setattr(self, 'source', 'logo.png'), 0)
+
+    def _consume_stream(self, url):
+        try:
+            import requests
+            response = requests.get(url, stream=True, timeout=5.0)
+            if response.status_code != 200:
+                print(f"[Stream Consumer Error] Server rejected connection: {response.status_code}")
+                return
+
+            bytes_buffer = bytes()
+            for chunk in response.iter_content(chunk_size=4096):
+                if not self.running:
+                    break
+                bytes_buffer += chunk
+                
+                a = bytes_buffer.find(b'\xff\xd8')
+                b = bytes_buffer.find(b'\xff\xd9')
+                
+                if a != -1 and b != -1 and b > a:
+                    jpg_data = bytes_buffer[a:b+2]
+                    bytes_buffer = bytes_buffer[b+2:]
+                    
+                    try:
+                        pil_img = PILImage.open(io.BytesIO(jpg_data))
+                        pil_img = pil_img.transpose(PILImage.FLIP_TOP_BOTTOM)
+                        pil_bytes = pil_img.convert('RGBA').tobytes()
+                        
+                        Clock.schedule_once(lambda dt, b=pil_bytes, w=pil_img.width, h=pil_img.height: self._update_texture(b, w, h), 0)
+                    except Exception as parse_err:
+                        pass
+        except Exception as conn_err:
+            print(f"[Stream Network Error] Stream dropped unexpectedly: {conn_err}")
+
+    def _update_texture(self, rgb_data, width, height):
+        if not self.running:
+            return
+        try:
+            texture = Texture.create(size=(width, height), colorfmt='rgba')
+            texture.blit_buffer(rgb_data, colorfmt='rgba', bufferfmt='ubyte')
+            self.texture = texture
+        except Exception as e:
+            print(f"Texture allocation structural failure: {e}")
+
 class ChatBubble(MDCard):
     def __init__(self, text, is_user=True, **kwargs):
         super().__init__(**kwargs)
@@ -313,7 +379,6 @@ class WebcamScreen(Screen):
     def __init__(self, app_instance, **kwargs):
         super().__init__(**kwargs)
         self.app = app_instance
-        self.stream_active = False
 
         layout = MDBoxLayout(orientation="vertical", md_bg_color=(0.05, 0.05, 0.08, 1))
         
@@ -330,10 +395,9 @@ class WebcamScreen(Screen):
             md_bg_color=(0.02, 0.02, 0.04, 1)
         )
         
-        self.stream_viewer = FitImage(
+        self.stream_viewer = LiveMJPEGViewer(
             source="logo.png",
-            size_hint=(1, 1),
-            radius=dp(12)
+            size_hint=(1, 1)
         )
         self.display_box.add_widget(self.stream_viewer)
         layout.add_widget(self.display_box)
@@ -356,27 +420,24 @@ class WebcamScreen(Screen):
         control_panel.add_widget(self.stream_toggle_btn)
         layout.add_widget(control_panel)
         
+        layout.add_widget(control_panel)
         self.add_widget(layout)
 
     def toggle_live_stream_state(self, instance):
-        if not self.stream_active:
-            self.stream_active = True
+        if not self.stream_viewer.running:
             self.stream_toggle_btn.text = "TERMINATE VIDEO CHANNEL"
             self.stream_toggle_btn.md_bg_color = (0.7, 0.1, 0.1, 1)
             
             stream_url = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/video_feed"
-            self.stream_viewer.source = stream_url
-            self.stream_viewer.reload()
+            self.stream_viewer.start_stream(stream_url)
         else:
             self.stop_remote_hardware_capture()
 
     def stop_remote_hardware_capture(self):
-        self.stream_active = False
+        self.stream_viewer.stop_stream()
+        
         self.stream_toggle_btn.text = "INITIALIZE VIDEO CHANNEL"
         self.stream_toggle_btn.md_bg_color = (0, 0.25, 0.5, 1)
-        
-        self.stream_viewer.source = "Images/NOVA_High.png"
-        self.stream_viewer.reload()
         
         def run_api_close():
             try:
@@ -386,8 +447,7 @@ class WebcamScreen(Screen):
         threading.Thread(target=run_api_close, daemon=True).start()
 
     def exit_stream_view(self):
-        if self.stream_active:
-            self.stop_remote_hardware_capture()
+        self.stop_remote_hardware_capture()
         self.app.switch_screen("dashboard")
 
 class NovaMobileApp(MDApp):
