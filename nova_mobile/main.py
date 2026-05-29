@@ -16,12 +16,13 @@ from kivymd.uix.toolbar import MDTopAppBar
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.clock import Clock
 from kivy.metrics import dp
-
-from mobile_config import API_URL, LAPTOP_TAILSCALE_IP
-
+from kivymd.uix.slider import MDSlider
+from kivymd.uix.list import MDList, OneLineAvatarIconListItem, IconLeftWidget, IconRightWidget
+from kivy.uix.scrollview import ScrollView
 from kivymd.uix.card import MDCard
 from kivy.uix.scrollview import ScrollView
 
+from mobile_config import API_URL, LAPTOP_TAILSCALE_IP
 
 class ChatBubble(MDCard):
     def __init__(self, text, is_user=True, **kwargs):
@@ -164,78 +165,144 @@ class SettingsScreen(Screen):
     def __init__(self, app_instance, **kwargs):
         super().__init__(**kwargs)
         self.app = app_instance
+        self.current_contacts = {}
 
-        layout = MDBoxLayout(orientation="vertical")
+        layout = MDBoxLayout(orientation="vertical", md_bg_color=(0.05, 0.05, 0.08, 1))
+        
         layout.add_widget(MDTopAppBar(
-            title="Settings",
+            title="System Settings Matrix",
             anchor_title="center",
+            md_bg_color=(0.08, 0.08, 0.12, 1),
             left_action_items=[["arrow-left", lambda x: self.app.switch_screen("dashboard")]]
         ))
 
-        content = MDBoxLayout(
-            orientation="vertical",
-            spacing=dp(15),
-            padding=dp(20)
-        )
+        scroll = ScrollView(do_scroll_x=False)
+        form_layout = MDBoxLayout(orientation="vertical", spacing=dp(18), padding=dp(20), size_hint_y=None)
+        form_layout.bind(minimum_height=form_layout.setter('height'))
 
-        content.add_widget(MDLabel(
-            text="Memory Summary",
-            font_style="Subtitle1",
-            theme_text_color="Primary",
-            size_hint_y=None,
-            height=dp(30)
-        ))
+        form_layout.add_widget(MDLabel(text="— Memory Core —", font_style="Subtitle2", theme_text_color="Custom", text_color=(0, 0.8, 1, 1), halign="center"))
+        self.memory_box = MDTextField(text="Syncing core metadata...", multiline=True, size_hint_y=None, height=dp(100), readonly=True)
+        form_layout.add_widget(self.memory_box)
+        form_layout.add_widget(MDRaisedButton(text="WIPE MEMORY CORE", md_bg_color=(0.5, 0.1, 0.1, 1), pos_hint={"center_x": 0.5}, on_release=self.wipe_memory_remote))
 
-        self.memory_box = MDTextField(
-            text="Loading...",
-            multiline=True,
-            size_hint_y=None,
-            height=dp(140),
-            readonly=True
-        )
-        content.add_widget(self.memory_box)
+        form_layout.add_widget(MDLabel(text="— Voice Notes —", font_style="Subtitle2", theme_text_color="Custom", text_color=(0, 0.8, 1, 1), halign="center"))
+        form_layout.add_widget(MDRaisedButton(text="CLEAR ALL NOTES", md_bg_color=(0.2, 0.2, 0.25, 1), pos_hint={"center_x": 0.5}, on_release=self.clear_notes_remote))
 
-        content.add_widget(MDRaisedButton(
-            text="WIPE MEMORY",
-            md_bg_color=(0.7, 0.1, 0.1, 1),
-            pos_hint={"center_x": 0.5},
-            on_release=self.wipe_memory_remote
-        ))
+        form_layout.add_widget(MDLabel(text="— Voice Speed —", font_style="Subtitle2", theme_text_color="Custom", text_color=(0, 0.8, 1, 1), halign="center"))
+        self.speed_lbl = MDLabel(text="Speed: +0%", halign="center", font_style="Body2", theme_text_color="Secondary")
+        form_layout.add_widget(self.speed_lbl)
+        
+        self.speed_slider = MDSlider(min=-50, max=50, value=0, step=1, size_hint_y=None, height=dp(30))
+        self.speed_slider.bind(on_touch_up=self.on_slider_release)
+        form_layout.add_widget(self.speed_slider)
 
-        layout.add_widget(content)
+        form_layout.add_widget(MDLabel(text="— Contact Directory —", font_style="Subtitle2", theme_text_color="Custom", text_color=(0, 0.8, 1, 1), halign="center"))
+        
+        add_contact_box = MDBoxLayout(orientation="horizontal", spacing=dp(5), size_hint_y=None, height=dp(50))
+        self.new_name_input = MDTextField(hint_text="Name", size_hint_x=0.4)
+        self.new_phone_input = MDTextField(hint_text="Phone Number", size_hint_x=0.4)
+        add_btn = MDIconButton(icon="plus-box", icon_size="32dp", theme_icon_color="Custom", icon_color=(0, 0.8, 1, 1), on_release=self.add_contact_local)
+        add_contact_box.add_widget(self.new_name_input)
+        add_contact_box.add_widget(self.new_phone_input)
+        add_contact_box.add_widget(add_btn)
+        form_layout.add_widget(add_contact_box)
+
+        self.contacts_list_ui = MDList()
+        form_layout.add_widget(self.contacts_list_ui)
+
+        scroll.add_widget(form_layout)
+        layout.add_widget(scroll)
         self.add_widget(layout)
+        
         self.on_enter = self.fetch_live_settings
 
     def fetch_live_settings(self):
         def run_fetch():
             try:
-                response = httpx.get(
-                    f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/settings",
-                    timeout=5.0
-                )
+                response = httpx.get(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/settings", timeout=5.0)
                 if response.status_code == 200:
                     data = response.json()
-                    Clock.schedule_once(lambda dt: self.update_fields(data), 0)
+                    Clock.schedule_once(lambda dt: self.update_ui_elements(data), 0)
             except Exception as e:
-                print(f"[Fetch Error] {e}")
+                print(f"[Fetch Error] Matrix sync failed: {e}")
         threading.Thread(target=run_fetch, daemon=True).start()
 
-    def update_fields(self, data):
-        self.memory_box.text = data.get("memory_summary", "No summary available.")
+    def update_ui_elements(self, data):
+        self.memory_box.text = data.get("memory_summary", "No summary logs available.")
+        
+        speed_str = data.get("voice_speed", "+0%")
+        self.speed_lbl.text = f"Speed: {speed_str}"
+        try:
+            val = int(speed_str.replace("%", "").replace("+", ""))
+            self.speed_slider.value = val
+        except:
+            self.speed_slider.value = 0
+
+        self.current_contacts = data.get("contacts", {})
+        self.rebuild_contacts_list_ui()
+
+    def rebuild_contacts_list_ui(self):
+        self.contacts_list_ui.clear_widgets()
+        for name, phone in self.current_contacts.items():
+            item = OneLineAvatarIconListItem(text=f"{name} : {phone}", theme_text_color="Primary")
+            item.add_widget(IconLeftWidget(icon="account"))
+            
+            del_btn = IconRightWidget(icon="close-circle", theme_icon_color="Custom", icon_color=(0.8, 0.2, 0.2, 1))
+            del_btn.bind(on_release=lambda x, n=name: self.delete_contact_remote(n))
+            item.add_widget(del_btn)
+            
+            self.contacts_list_ui.add_widget(item)
+
+    def on_slider_release(self, instance, touch):
+        if instance.collide_point(*touch.pos):
+            val = int(self.speed_slider.value)
+            sign = "+" if val >= 0 else ""
+            speed_str = f"{sign}{val}%"
+            self.speed_lbl.text = f"Speed: {speed_str}"
+            self.push_settings_update({"voice_speed": speed_str, "contacts": self.current_contacts})
+
+    def add_contact_local(self, instance):
+        name = self.new_name_input.text.strip().lower()
+        phone = self.new_phone_input.text.strip()
+        if name and phone:
+            self.current_contacts[name] = phone
+            self.new_name_input.text = ""
+            self.new_phone_input.text = ""
+            self.rebuild_contacts_list_ui()
+            self.push_settings_update({"contacts": self.current_contacts})
+
+    def delete_contact_remote(self, name_to_remove):
+        if name_to_remove in self.current_contacts:
+            del self.current_contacts[name_to_remove]
+            self.rebuild_contacts_list_ui()
+            self.push_settings_update({"contacts": self.current_contacts})
+
+    def push_settings_update(self, payload):
+        def run_push():
+            try:
+                httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/update_settings", json=payload, timeout=5.0)
+            except Exception as e:
+                print(f"[Push Error] Server write failed: {e}")
+        threading.Thread(target=run_push, daemon=True).start()
 
     def wipe_memory_remote(self, instance):
         def run_wipe():
             try:
-                httpx.post(
-                    f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/wipe_memory",
-                    timeout=5.0
-                )
-                Clock.schedule_once(
-                    lambda dt: setattr(self.memory_box, 'text', 'Memory wiped.'), 0
-                )
+                httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/wipe_memory", timeout=5.0)
+                Clock.schedule_once(lambda dt: setattr(self.memory_box, 'text', 'Memory cores wiped cleanly.'), 0)
             except Exception as e:
                 print(e)
         threading.Thread(target=run_wipe, daemon=True).start()
+
+    def clear_notes_remote(self, instance):
+        def run_clear():
+            try:
+                url = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/update_settings"
+                query_url = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/query"
+                httpx.post(query_url, json={"text": "clear all notes"}, timeout=10.0)
+            except Exception as e:
+                print(e)
+        threading.Thread(target=run_clear, daemon=True).start()
 
 
 class NovaMobileApp(MDApp):
