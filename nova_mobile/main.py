@@ -449,6 +449,48 @@ class WebcamScreen(Screen):
         self.stop_remote_hardware_capture()
         self.app.switch_screen("dashboard")
 
+    def on_pre_enter(self):
+        print("[Orientation Core] Locking viewport into Widescreen Landscape Mode...")
+        self.set_orientation_landscape()
+
+    def on_pre_leave(self):
+        print("[Orientation Core] Restoring viewport to Vertical Portrait Mode...")
+        self.set_orientation_portrait()
+
+    def set_orientation_landscape(self):
+        from kivy.core.window import Window
+        from kivy.utils import platform
+
+        if platform == 'android':
+            try:
+                from jnius import autoclass
+                activity = autoclass('org.kivy.android.PythonActivity').mActivity
+                ActivityInfo = autoclass('android.content.pm.ActivityInfo')
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+            except Exception as e:
+                print(f"[Android Orientation Error] Failed to rotate hardware: {e}")
+        else:
+            if Window.width < Window.height:
+                current_w, current_h = Window.width, Window.height
+                Window.size = (max(current_w, current_h), min(current_w, current_h))
+
+    def set_orientation_portrait(self):
+        from kivy.core.window import Window
+        from kivy.utils import platform
+
+        if platform == 'android':
+            try:
+                from jnius import autoclass
+                activity = autoclass('org.kivy.android.PythonActivity').mActivity
+                ActivityInfo = autoclass('android.content.pm.ActivityInfo')
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+            except Exception as e:
+                print(f"[Android Orientation Error] Failed to restore hardware: {e}")
+        else:
+            if Window.width > Window.height:
+                current_w, current_h = Window.width, Window.height
+                Window.size = (min(current_w, current_h), max(current_w, current_h))
+
 class NovaMobileApp(MDApp):
     def build(self):
         self.theme_cls.theme_style = "Dark"
