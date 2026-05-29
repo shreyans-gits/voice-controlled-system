@@ -51,7 +51,7 @@ class LiveMJPEGViewer(Image):
     def _consume_stream(self, url):
         try:
             import requests
-            response = requests.get(url, stream=True, timeout=5.0)
+            response = requests.get(url, stream=True, timeout=(5.0, None))
             if response.status_code != 200:
                 print(f"[Stream Consumer Error] Server rejected connection: {response.status_code}")
                 return
@@ -420,7 +420,6 @@ class WebcamScreen(Screen):
         control_panel.add_widget(self.stream_toggle_btn)
         layout.add_widget(control_panel)
         
-        layout.add_widget(control_panel)
         self.add_widget(layout)
 
     def toggle_live_stream_state(self, instance):
