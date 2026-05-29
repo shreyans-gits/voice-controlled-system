@@ -188,17 +188,30 @@ class DashboardScreen(Screen):
         )
         control_panel.add_widget(self.status_lbl)
 
+        button_row = MDBoxLayout(orientation="horizontal", spacing=dp(30), pos_hint={"center_x": 0.5}, size_hint=(None, None))
+        button_row.bind(minimum_width=button_row.setter('width'), minimum_height=button_row.setter('height'))
+        
         self.mic_btn = MDIconButton(
             icon="microphone-off",
             icon_size="52dp",
-            pos_hint={"center_x": 0.5},
             md_bg_color=(0.18, 0.18, 0.22, 1),
             theme_icon_color="Custom",
             icon_color=(1, 0.3, 0.3, 1)
         )
         self.mic_btn.bind(on_release=self.toggle_microphone_state)
-        control_panel.add_widget(self.mic_btn)
+        button_row.add_widget(self.mic_btn)
 
+        self.cam_btn = MDIconButton(
+            icon="video-off",
+            icon_size="52dp",
+            md_bg_color=(0.18, 0.18, 0.22, 1),
+            theme_icon_color="Custom",
+            icon_color=(1, 0.3, 0.3, 1)
+        )
+        self.cam_btn.bind(on_release=self.toggle_reverse_video_stream)
+        button_row.add_widget(self.cam_btn)
+
+        control_panel.add_widget(button_row)
         layout.add_widget(control_panel)
         self.add_widget(layout)
 
@@ -228,6 +241,28 @@ class DashboardScreen(Screen):
             self.status_lbl.theme_text_color = "Error"
             self.add_bubble_to_ui("Microphone paused.", is_user=False)
             self.app.sync_laptop_mic_state(mute=False)
+
+    def toggle_reverse_video_stream(self, instance):
+        if not getattr(self.app, 'reverse_stream_active', False):
+            self.app.reverse_stream_active = True
+            self.cam_btn.icon = "video"
+            self.cam_btn.icon_color = (0, 0.8, 1, 1)
+            self.cam_btn.md_bg_color = (0, 0.2, 0.4, 1)
+            self.app.start_reverse_camera_pipeline()
+        else:
+            self.app.reverse_stream_active = False
+            self.cam_btn.icon = "video-off"
+            self.cam_btn.icon_color = (1, 0.3, 0.3, 1)
+            self.cam_btn.md_bg_color = (0.18, 0.18, 0.22, 1)
+            
+            def run_server_stop():
+                try:
+                    import httpx
+                    httpx.post(f"http://{self.app.settings_screen.app.LAPTOP_TAILSCALE_IP}:8000/api/mobile/stop_feed", timeout=2.0)
+                except:
+                    pass
+            import threading
+            threading.Thread(target=run_server_stop, daemon=True).start()
 
 
 class SettingsScreen(Screen):
@@ -656,6 +691,48 @@ class NovaMobileApp(MDApp):
             self.dashboard.status_lbl.text_color = (0, 0.8, 1, 1)
             self.sync_laptop_mic_state(mute=True)
             self.start_listening_loop()
+
+    def stream_phone_camera_to_laptop(self):
+        import cv2
+        import requests
+        import time
+        
+        cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        
+        url = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/upload_frame"
+        print("[Reverse Stream] 🎥 Phone camera streaming active...")
+        
+        while getattr(self, 'reverse_stream_active', False):
+            ret, frame = cap.read()
+            if not ret:
+                break
+                
+            try:
+                _, encoded_img = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
+                raw_bytes = encoded_img.tobytes()
+                
+                requests.post(url, data=raw_bytes, timeout=1.0)
+            except Exception as e:
+                print(f"[Upload Drop] Network frame sync missed: {e}")
+                
+            time.sleep(0.04)
+                
+        cap.release()
+        print("[Reverse Stream] 🛑 Phone camera deactivated cleanly.")
+
+    def start_reverse_camera_pipeline(self):
+        def async_init():
+            try:
+                httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/start_reverse_stream", timeout=3.0)
+                
+                import threading
+                threading.Thread(target=self.stream_phone_camera_to_laptop, daemon=True).start()
+            except Exception as e:
+                print(f"[Reverse Stream Error] Initial setup failed: {e}")
+                
+        threading.Thread(target=async_init, daemon=True).start()
 
     def sync_laptop_mic_state(self, mute):
         def async_sync():

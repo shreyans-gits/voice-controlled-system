@@ -214,4 +214,58 @@ def stop_video_feed():
     camera_active = False
     return {"status": "Camera deactivated"}
 
+
+import webbrowser
+from fastapi import Request
+from fastapi.responses import HTMLResponse, StreamingResponse
+import asyncio
+
+current_mobile_frame = None
+
+@router.post("/start_reverse_stream")
+async def start_reverse_stream():
+    print("[Server Pipeline] Phone camera request verified. Launching browser canvas...")
+    webbrowser.open("http://localhost:8000/mobile_camera")
+    return {"status": "success", "message": "Browser tab opened automatically."}
+
+@router.post("/upload_frame")
+async def upload_mobile_frame(request: Request):
+    global current_mobile_frame
+    current_mobile_frame = await request.body()
+    return {"status": "received"}
+
+@router.get("/stream_browser_view")
+async def stream_browser_view():
+    async def frame_generator():
+        global current_mobile_frame
+        while True:
+            if current_mobile_frame:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + current_mobile_frame + b'\r\n')
+            await asyncio.sleep(0.033)
+
+    return StreamingResponse(frame_generator(), media_type="multipart/x-mixed-replace; boundary=frame")
+
+
+@app.get("/mobile_camera", response_class=HTMLResponse)
+async def mobile_camera_page():
+    return """
+    <html>
+        <head>
+            <title>NOVA Roaming Eye Feed</title>
+            <style>
+                body { margin: 0; background: #050508; display: flex; justify-content: center; align-items: center; height: 100vh; color: #00e5ff; font-family: monospace; }
+                .container { text-align: center; }
+                img { border: 2px solid #005588; border-radius: 12px; max-width: 90vw; max-height: 80vh; box-shadow: 0 0 20px rgba(0,229,255,0.2); }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>[ LIVE PORTAL - ROAMING MOBILE EYE ]</h2>
+                <img src="/api/mobile/stream_browser_view" />
+            </div>
+        </body>
+    </html>
+    """
+
 app.include_router(router)
