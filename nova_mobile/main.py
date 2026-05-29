@@ -78,7 +78,10 @@ class DashboardScreen(Screen):
             anchor_title="center",
             elevation=4,
             md_bg_color=(0.08, 0.08, 0.12, 1),
-            right_action_items=[["cog", lambda x: self.app.switch_screen("settings")]]
+            right_action_items=[
+                ["webcam", lambda x: self.app.switch_screen("webcam")],
+                ["cog", lambda x: self.app.switch_screen("settings")]
+            ]
         ))
 
         self.scroll_view = ScrollView(
@@ -304,6 +307,88 @@ class SettingsScreen(Screen):
                 print(e)
         threading.Thread(target=run_clear, daemon=True).start()
 
+from kivymd.uix.fitimage import FitImage
+
+class WebcamScreen(Screen):
+    def __init__(self, app_instance, **kwargs):
+        super().__init__(**kwargs)
+        self.app = app_instance
+        self.stream_active = False
+
+        layout = MDBoxLayout(orientation="vertical", md_bg_color=(0.05, 0.05, 0.08, 1))
+        
+        layout.add_widget(MDTopAppBar(
+            title="Workspace Video Link",
+            anchor_title="center",
+            md_bg_color=(0.08, 0.08, 0.12, 1),
+            left_action_items=[["arrow-left", lambda x: self.exit_stream_view()]]
+        ))
+
+        self.display_box = MDBoxLayout(
+            orientation="vertical", 
+            padding=dp(10), 
+            md_bg_color=(0.02, 0.02, 0.04, 1)
+        )
+        
+        self.stream_viewer = FitImage(
+            source="logo.png",
+            size_hint=(1, 1),
+            radius=dp(12)
+        )
+        self.display_box.add_widget(self.stream_viewer)
+        layout.add_widget(self.display_box)
+
+        control_panel = MDBoxLayout(
+            orientation="horizontal", 
+            spacing=dp(15), 
+            padding=dp(15), 
+            size_hint_y=None, 
+            height=dp(80),
+            md_bg_color=(0.08, 0.08, 0.12, 1)
+        )
+
+        self.stream_toggle_btn = MDRaisedButton(
+            text="INITIALIZE VIDEO CHANNEL", 
+            md_bg_color=(0, 0.25, 0.5, 1),
+            pos_hint={"center_y": 0.5},
+            on_release=self.toggle_live_stream_state
+        )
+        control_panel.add_widget(self.stream_toggle_btn)
+        layout.add_widget(control_panel)
+        
+        self.add_widget(layout)
+
+    def toggle_live_stream_state(self, instance):
+        if not self.stream_active:
+            self.stream_active = True
+            self.stream_toggle_btn.text = "TERMINATE VIDEO CHANNEL"
+            self.stream_toggle_btn.md_bg_color = (0.7, 0.1, 0.1, 1)
+            
+            stream_url = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/video_feed"
+            self.stream_viewer.source = stream_url
+            self.stream_viewer.reload()
+        else:
+            self.stop_remote_hardware_capture()
+
+    def stop_remote_hardware_capture(self):
+        self.stream_active = False
+        self.stream_toggle_btn.text = "INITIALIZE VIDEO CHANNEL"
+        self.stream_toggle_btn.md_bg_color = (0, 0.25, 0.5, 1)
+        
+        self.stream_viewer.source = "Images/NOVA_High.png"
+        self.stream_viewer.reload()
+        
+        def run_api_close():
+            try:
+                httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/stop_feed", timeout=3.0)
+            except Exception as e:
+                print(f"[Stream Warning] Camera kill packet dropped: {e}")
+        threading.Thread(target=run_api_close, daemon=True).start()
+
+    def exit_stream_view(self):
+        if self.stream_active:
+            self.stop_remote_hardware_capture()
+        self.app.switch_screen("dashboard")
 
 class NovaMobileApp(MDApp):
     def build(self):
@@ -313,13 +398,15 @@ class NovaMobileApp(MDApp):
         self.is_muted = True
         self._audio_thread_running = False
         self.pyaudio_instance = pyaudio.PyAudio()
-
+    
         self.sm = ScreenManager()
         self.dashboard = DashboardScreen(self, name="dashboard")
         self.settings_screen = SettingsScreen(self, name="settings")
+        self.webcam_screen = WebcamScreen(self, name="webcam")
 
         self.sm.add_widget(self.dashboard)
         self.sm.add_widget(self.settings_screen)
+        self.sm.add_widget(self.webcam_screen)
         return self.sm
 
     def switch_screen(self, name):
