@@ -710,7 +710,7 @@ class NovaMobileApp(MDApp):
                 break
                 
             try:
-                frame = cv2.flip(frame, 0)
+                frame = cv2.flip(frame, 1)
                 _, encoded_img = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
                 raw_bytes = encoded_img.tobytes()
                 
