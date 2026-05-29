@@ -272,64 +272,70 @@ class NovaMobileApp(MDApp):
         SILENCE_THRESHOLD = 500
         SILENCE_DURATION = 1.5
 
+        if self.is_muted:
+            self._audio_thread_running = False
+            return
+
+        try:
+            stream = self.pyaudio_instance.open(
+                format=FORMAT, channels=CHANNELS,
+                rate=RATE, input=True,
+                frames_per_buffer=CHUNK
+            )
+        except Exception as e:
+            print(f"Mic open exception: {e}")
+            self._audio_thread_running = False
+            return
+
+        audio_frames = []
+        speaking_started = False
+        silence_start_time = None
+
+        print("[Audio Engine] 🟢 Mobile channel hot and listening...")
+
         while not self.is_muted:
             try:
-                stream = self.pyaudio_instance.open(
-                    format=FORMAT, channels=CHANNELS,
-                    rate=RATE, input=True,
-                    frames_per_buffer=CHUNK
-                )
+                data = stream.read(CHUNK, exception_on_overflow=False)
+                audio_frames.append(data)
+                amplitude = np.abs(np.frombuffer(data, dtype=np.int16)).mean()
+
+                if amplitude > SILENCE_THRESHOLD:
+                    if not speaking_started:
+                        speaking_started = True
+                        print("[Audio Engine] Voice signal intercepted.")
+                    silence_start_time = None
+                else:
+                    if speaking_started:
+                        if silence_start_time is None:
+                            silence_start_time = time.time()
+                        elif time.time() - silence_start_time > SILENCE_DURATION:
+                            print("[Audio Engine] Silence limit reached. Preparing transmission...")
+                            break
             except Exception as e:
-                print(f"Mic open exception: {e}")
+                print(f"Buffer read error: {e}")
                 break
 
-            audio_frames = []
-            speaking_started = False
-            silence_start_time = None
-
-            print("[Audio Engine] Hot channel active.")
-
-            while not self.is_muted:
-                try:
-                    data = stream.read(CHUNK, exception_on_overflow=False)
-                    audio_frames.append(data)
-                    amplitude = np.abs(np.frombuffer(data, dtype=np.int16)).mean()
-
-                    if amplitude > SILENCE_THRESHOLD:
-                        if not speaking_started:
-                            speaking_started = True
-                            print("[Audio Engine] Voice signal intercepted.")
-                        silence_start_time = None
-                    else:
-                        if speaking_started:
-                            if silence_start_time is None:
-                                silence_start_time = time.time()
-                            elif time.time() - silence_start_time > SILENCE_DURATION:
-                                print("[Audio Engine] Silence limit reached. Sending...")
-                                break
-                except Exception as e:
-                    print(f"Buffer read error: {e}")
-                    break
-
+        try:
             stream.stop_stream()
             stream.close()
+        except:
+            pass
 
-            if audio_frames and speaking_started and not self.is_muted:
-                cache_path = "mobile_input.wav"
-                with wave.open(cache_path, 'wb') as wf:
-                    wf.setnchannels(CHANNELS)
-                    wf.setsampwidth(self.pyaudio_instance.get_sample_size(FORMAT))
-                    wf.setframerate(RATE)
-                    wf.writeframes(b''.join(audio_frames))
+        if audio_frames and speaking_started and not self.is_muted:
+            unique_id = int(time.time())
+            cache_path = f"mobile_input_{unique_id}.wav"
+            with wave.open(cache_path, 'wb') as wf:
+                wf.setnchannels(CHANNELS)
+                wf.setsampwidth(self.pyaudio_instance.get_sample_size(FORMAT))
+                wf.setframerate(RATE)
+                wf.writeframes(b''.join(audio_frames))
 
-                Clock.schedule_once(
-                    lambda dt: setattr(self.dashboard.status_lbl, 'text', "TRANSMITTING..."), 0
-                )
-                self._audio_thread_running = False
-                self.transmit_audio_payload(cache_path)
-                return
-
-        self._audio_thread_running = False
+            Clock.schedule_once(lambda dt: setattr(self.dashboard.status_lbl, 'text', "TRANSMITTING..."), 0)
+            self._audio_thread_running = False
+            self.transmit_audio_payload(cache_path)
+        else:
+            self._audio_thread_running = False
+            Clock.schedule_once(lambda dt: self.reset_dashboard_state(), 0)
 
     def transmit_audio_payload(self, file_path):
         def async_post():
@@ -369,7 +375,6 @@ class NovaMobileApp(MDApp):
                         os.remove(file_path)
                 except:
                     pass
-                self.sync_laptop_mic_state(mute=False)
                 Clock.schedule_once(lambda dt: self.reset_dashboard_state(), 1.0)
 
         threading.Thread(target=async_post, daemon=True).start()
