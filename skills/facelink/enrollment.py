@@ -12,13 +12,18 @@ class Enrollment:
         self.detector = Detector()
         self.embedder = Embedder()
 
-    def save_enrolled(self, db, file_path="data/enrolled_faces.pkl"):
+    def save_enrolled(self, db, file_path=None):
+        if file_path is None:
+            file_path = DB_PATH
         with open(file_path, "wb") as f:
             pickle.dump(db, f)
         print(f"Database saved to {file_path}")
 
-    def load_enrolled(self, file_path="data/enrolled_faces.pkl"):
+    def load_enrolled(self, file_path=None):
+        if file_path is None:
+            file_path = DB_PATH
         if not os.path.exists(file_path):
+            print(f"[Enrollment] DB not found at: {file_path}")
             return {}
         with open(file_path, "rb") as f:
             return pickle.load(f)
