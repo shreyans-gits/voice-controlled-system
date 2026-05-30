@@ -225,20 +225,49 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 import asyncio
 
 current_mobile_frame = None
+reverse_stream_active = False
+last_face_result = []
 
 @router.post("/start_reverse_stream")
 async def start_reverse_stream():
-    print("[Server Pipeline] Phone camera request verified. Launching browser canvas...")
+    global reverse_stream_active
+    print("[Server Pipeline] Phone camera verified. Launching browser canvas...")
+    reverse_stream_active = True 
     webbrowser.open("http://localhost:8000/mobile_camera")
     return {"status": "success", "message": "Browser tab opened automatically."}
 
+@router.post("/stop_reverse_stream")
+async def stop_reverse_stream():
+    global reverse_stream_active, current_mobile_frame, last_face_result
+    print("[Server Pipeline] Deactivating reverse streaming channels.")
+    reverse_stream_active = False
+    current_mobile_frame = None
+    last_face_result = []
+    return {"status": "stopped"}
+
+
+
+from fastapi import Request, Body
+import numpy as np
+import cv2
+import sys
+
+@router.get("/last_face_result")
+def get_last_face_result():
+    """Exposes a lightweight polling node for the phone to check who is currently visible."""
+    global last_face_result
+    return {"names": last_face_result}
+
 @router.post("/upload_frame")
 async def upload_mobile_frame(request: Request):
-    global current_mobile_frame, reverse_stream_active
+    global current_mobile_frame, reverse_stream_active, last_face_result
     if not reverse_stream_active:
         return {"status": "ignored"}
+        
     img_bytes = await request.body()
-    
+    if not img_bytes:
+        return {"status": "empty"}
+
     try:
         nparr = np.frombuffer(img_bytes, np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -247,21 +276,26 @@ async def upload_mobile_frame(request: Request):
             main_module = sys.modules.get('__main__')
             
             if main_module and hasattr(main_module, 'facelink'):
-                face_locations = main_module.facelink.face_locations(frame)
-                
-                for (top, right, bottom, left) in face_locations:
-                    cv2.rectangle(frame, (left, top), (right, bottom), (255, 229, 0), 2) # BGR Cyan/Blue highlight
+                try:
+                    results = main_module.facelink.detect_and_identify_frame(frame)                    
+                    last_face_result = [name for _, name in results if name != "Unknown"]
                     
-                    cv2.putText(frame, "TRACKING STATE: VERIFIED USER", (left, top - 10), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 229, 0), 2)
+                    for location, name in results:
+                        top, right, bottom, left = location
+                        color = (0, 255, 100) if name != "Unknown" else (0, 100, 255)
+                        
+                        cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
+                        cv2.putText(frame, name, (left, top - 10),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                except Exception as cv_err:
+                    print(f"[FaceLink Pipeline Target Failure] Frame scan skipped: {cv_err}")
             
             _, encoded_img = cv2.imencode('.jpg', frame)
             current_mobile_frame = encoded_img.tobytes()
         else:
             current_mobile_frame = img_bytes
-            
-    except Exception as cv_err:
-        print(f"[FaceLink Pipeline Error] Frame scan aborted: {cv_err}")
+    except Exception as e:
+        print(f"[Critical Server Sink Error] {e}")
         current_mobile_frame = img_bytes
 
     return {"status": "received"}
