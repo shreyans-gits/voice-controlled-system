@@ -1,11 +1,14 @@
-import pydantic
 from fastapi import FastAPI, BackgroundTasks, APIRouter, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+
+import pydantic
 import queue
 import cv2
 import json
 import os
+import numpy as np
+import sys
 
 app = FastAPI(title="N.O.V.A. Core API Layer", version="1.0.0")
 router = APIRouter(prefix="/api/mobile")
@@ -231,8 +234,36 @@ async def start_reverse_stream():
 
 @router.post("/upload_frame")
 async def upload_mobile_frame(request: Request):
-    global current_mobile_frame
-    current_mobile_frame = await request.body()
+    global current_mobile_frame, reverse_stream_active
+    if not reverse_stream_active:
+        return {"status": "ignored"}
+    img_bytes = await request.body()
+    
+    try:
+        nparr = np.frombuffer(img_bytes, np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if frame is not None:
+            main_module = sys.modules.get('__main__')
+            
+            if main_module and hasattr(main_module, 'facelink'):
+                face_locations = main_module.facelink.face_locations(frame)
+                
+                for (top, right, bottom, left) in face_locations:
+                    cv2.rectangle(frame, (left, top), (right, bottom), (255, 229, 0), 2) # BGR Cyan/Blue highlight
+                    
+                    cv2.putText(frame, "TRACKING STATE: VERIFIED USER", (left, top - 10), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 229, 0), 2)
+            
+            _, encoded_img = cv2.imencode('.jpg', frame)
+            current_mobile_frame = encoded_img.tobytes()
+        else:
+            current_mobile_frame = img_bytes
+            
+    except Exception as cv_err:
+        print(f"[FaceLink Pipeline Error] Frame scan aborted: {cv_err}")
+        current_mobile_frame = img_bytes
+
     return {"status": "received"}
 
 @router.get("/stream_browser_view")
