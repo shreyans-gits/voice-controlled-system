@@ -748,7 +748,7 @@ class NovaMobileApp(MDApp):
 
                 try:
                     if current_index == 1:
-                        frame = cv2.flip(frame, 1)
+                        frame = cv2.flip(frame, -1)
                     else:
                         frame = cv2.flip(frame, 0)
 
