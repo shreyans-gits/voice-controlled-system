@@ -5,6 +5,8 @@ import threading
 import httpx
 import numpy as np
 import pyaudio
+import io
+from PIL import Image as PILImage
 
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -20,14 +22,10 @@ from kivymd.uix.slider import MDSlider
 from kivymd.uix.list import MDList, OneLineAvatarIconListItem, IconLeftWidget, IconRightWidget
 from kivy.uix.scrollview import ScrollView
 from kivymd.uix.card import MDCard
-from kivy.uix.scrollview import ScrollView
-
-from mobile_config import API_URL, LAPTOP_TAILSCALE_IP
-
 from kivy.uix.image import Image
 from kivy.graphics.texture import Texture
-import io
-from PIL import Image as PILImage
+
+from mobile_config import API_URL, LAPTOP_TAILSCALE_IP
 
 class LiveMJPEGViewer(Image):
     def __init__(self, **kwargs):
@@ -223,7 +221,8 @@ class DashboardScreen(Screen):
         button_row.add_widget(self.flip_cam_btn)
 
         control_panel.add_widget(button_row)
-        layout.add_widget(control_panel)
+        layout.add_widget(control_panel)        
+        self.add_widget(layout)
 
     def add_bubble_to_ui(self, text, is_user=True):
         bubble = ChatBubble(text=text, is_user=is_user)
@@ -258,28 +257,6 @@ class DashboardScreen(Screen):
             self.cam_btn.icon = "video"
             self.cam_btn.icon_color = (0, 0.8, 1, 1)
             self.cam_btn.md_bg_color = (0, 0.2, 0.4, 1)
-            self.app.start_reverse_camera_pipeline()
-        else:
-            self.app.reverse_stream_active = False
-            self.cam_btn.icon = "video-off"
-            self.cam_btn.icon_color = (1, 0.3, 0.3, 1)
-            self.cam_btn.md_bg_color = (0.18, 0.18, 0.22, 1)
-            
-            def run_server_stop():
-                try:
-                    import httpx
-                    httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/stop_feed", timeout=2.0)
-                except Exception as e:
-                    print(f"Stop feed warning: {e}")
-            threading.Thread(target=run_server_stop, daemon=True).start()
-    
-    def toggle_reverse_video_stream(self, instance):
-        if not getattr(self.app, 'reverse_stream_active', False):
-            self.app.reverse_stream_active = True
-            self.cam_btn.icon = "video"
-            self.cam_btn.icon_color = (0, 0.8, 1, 1)
-            self.cam_btn.md_bg_color = (0, 0.2, 0.4, 1)
-            
             self.flip_cam_btn.disabled = False
             self.app.start_reverse_camera_pipeline()
         else:
@@ -287,15 +264,14 @@ class DashboardScreen(Screen):
             self.cam_btn.icon = "video-off"
             self.cam_btn.icon_color = (1, 0.3, 0.3, 1)
             self.cam_btn.md_bg_color = (0.18, 0.18, 0.22, 1)
-            
             self.flip_cam_btn.disabled = True
-            
+
             def run_server_stop():
                 try:
                     import httpx
-                    httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/stop_feed", timeout=2.0)
-                except:
-                    pass
+                    httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/stop_reverse_stream", timeout=2.0)
+                except Exception as e:
+                    print(f"Stop stream warning: {e}")
             threading.Thread(target=run_server_stop, daemon=True).start()
 
 
@@ -442,7 +418,6 @@ class SettingsScreen(Screen):
                 print(e)
         threading.Thread(target=run_clear, daemon=True).start()
 
-from kivymd.uix.fitimage import FitImage
 
 class WebcamScreen(Screen):
     def __init__(self, app_instance, **kwargs):
@@ -568,6 +543,7 @@ class NovaMobileApp(MDApp):
         self.is_muted = True
         self._audio_thread_running = False
         self.pyaudio_instance = pyaudio.PyAudio()
+        self.camera_index = 0
     
         self.sm = ScreenManager()
         self.dashboard = DashboardScreen(self, name="dashboard")
@@ -577,7 +553,6 @@ class NovaMobileApp(MDApp):
         self.sm.add_widget(self.dashboard)
         self.sm.add_widget(self.settings_screen)
         self.sm.add_widget(self.webcam_screen)
-        self.camera_index = 0
         return self.sm
 
     def switch_screen(self, name):
@@ -737,7 +712,7 @@ class NovaMobileApp(MDApp):
 
         while getattr(self, 'reverse_stream_active', False):
             current_index = self.camera_index
-            cap = cv2.VideoCapture(current_index)
+            cap = cv2.VideoCapture(0)
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
             cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
@@ -748,9 +723,9 @@ class NovaMobileApp(MDApp):
 
                 try:
                     if current_index == 1:
-                        frame = cv2.flip(frame, -1)
+                        frame = cv2.flip(frame, 1)
                     else:
-                        frame = cv2.flip(frame, 0)
+                        frame = cv2.flip(frame, 1)
 
                     _, encoded_img = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
                     raw_bytes = encoded_img.tobytes()
