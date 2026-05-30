@@ -188,7 +188,7 @@ class DashboardScreen(Screen):
         )
         control_panel.add_widget(self.status_lbl)
 
-        button_row = MDBoxLayout(orientation="horizontal", spacing=dp(30), pos_hint={"center_x": 0.5}, size_hint=(None, None))
+        button_row = MDBoxLayout(orientation="horizontal", spacing=dp(20), pos_hint={"center_x": 0.5}, size_hint=(None, None))
         button_row.bind(minimum_width=button_row.setter('width'), minimum_height=button_row.setter('height'))
         
         self.mic_btn = MDIconButton(
@@ -211,9 +211,19 @@ class DashboardScreen(Screen):
         self.cam_btn.bind(on_release=self.toggle_reverse_video_stream)
         button_row.add_widget(self.cam_btn)
 
+        self.flip_cam_btn = MDIconButton(
+            icon="camera-flip",
+            icon_size="52dp",
+            md_bg_color=(0.18, 0.18, 0.22, 1),
+            theme_icon_color="Custom",
+            icon_color=(0, 0.8, 1, 1),
+            disabled=True
+        )
+        self.flip_cam_btn.bind(on_release=lambda x: self.app.switch_active_camera_lens())
+        button_row.add_widget(self.flip_cam_btn)
+
         control_panel.add_widget(button_row)
         layout.add_widget(control_panel)
-        self.add_widget(layout)
 
     def add_bubble_to_ui(self, text, is_user=True):
         bubble = ChatBubble(text=text, is_user=is_user)
@@ -261,6 +271,31 @@ class DashboardScreen(Screen):
                     httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/stop_feed", timeout=2.0)
                 except Exception as e:
                     print(f"Stop feed warning: {e}")
+            threading.Thread(target=run_server_stop, daemon=True).start()
+    
+    def toggle_reverse_video_stream(self, instance):
+        if not getattr(self.app, 'reverse_stream_active', False):
+            self.app.reverse_stream_active = True
+            self.cam_btn.icon = "video"
+            self.cam_btn.icon_color = (0, 0.8, 1, 1)
+            self.cam_btn.md_bg_color = (0, 0.2, 0.4, 1)
+            
+            self.flip_cam_btn.disabled = False
+            self.app.start_reverse_camera_pipeline()
+        else:
+            self.app.reverse_stream_active = False
+            self.cam_btn.icon = "video-off"
+            self.cam_btn.icon_color = (1, 0.3, 0.3, 1)
+            self.cam_btn.md_bg_color = (0.18, 0.18, 0.22, 1)
+            
+            self.flip_cam_btn.disabled = True
+            
+            def run_server_stop():
+                try:
+                    import httpx
+                    httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/stop_feed", timeout=2.0)
+                except:
+                    pass
             threading.Thread(target=run_server_stop, daemon=True).start()
 
 
@@ -542,6 +577,7 @@ class NovaMobileApp(MDApp):
         self.sm.add_widget(self.dashboard)
         self.sm.add_widget(self.settings_screen)
         self.sm.add_widget(self.webcam_screen)
+        self.camera_index = 0
         return self.sm
 
     def switch_screen(self, name):
@@ -695,31 +731,36 @@ class NovaMobileApp(MDApp):
         import cv2
         import requests
         import time
-        
-        cap = cv2.VideoCapture(0)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        
+
         url = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/upload_frame"
-        print("[Reverse Stream] 🎥 Phone camera streaming active...")
-        
+        print("[Reverse Stream] 🎥 Phone camera streaming loop active...")
+
         while getattr(self, 'reverse_stream_active', False):
-            ret, frame = cap.read()
-            if not ret:
-                break
-                
-            try:
-                frame = cv2.flip(frame, 1)
-                _, encoded_img = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
-                raw_bytes = encoded_img.tobytes()
-                
-                requests.post(url, data=raw_bytes, timeout=1.0)
-            except Exception as e:
-                print(f"[Upload Drop] Network frame sync missed: {e}")
-                
-            time.sleep(0.04)
-                
-        cap.release()
+            current_index = self.camera_index
+            cap = cv2.VideoCapture(current_index)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+            while getattr(self, 'reverse_stream_active', False) and self.camera_index == current_index:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                try:
+                    if current_index == 1:
+                        frame = cv2.flip(frame, 1)
+                    else:
+                        frame = cv2.flip(frame, 0)
+
+                    _, encoded_img = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
+                    raw_bytes = encoded_img.tobytes()
+                    requests.post(url, data=raw_bytes, timeout=1.0)
+
+                except Exception as e:
+                    print(f"[Upload Drop] Network frame sync missed: {e}")
+                time.sleep(0.04)
+            cap.release()
+
         print("[Reverse Stream] 🛑 Phone camera deactivated cleanly.")
 
     def start_reverse_camera_pipeline(self):
@@ -754,6 +795,12 @@ class NovaMobileApp(MDApp):
         except:
             pass
 
+    def switch_active_camera_lens(self):
+        if getattr(self, 'reverse_stream_active', False):
+            self.camera_index = 1 if self.camera_index == 0 else 0
+            lens_name = "FRONT LENS" if self.camera_index == 1 else "REAR LENS"
+            print(f"[Hardware Sync] Toggling phone video loop to: {lens_name}")
+            self.dashboard.add_bubble_to_ui(f"Switching to {lens_name}...", is_user=False)
 
 if __name__ == "__main__":
     NovaMobileApp().run()
