@@ -399,7 +399,10 @@ def main(dashboard, message_queue, input_queue):
     voice_note = VoiceNoteModule()
 
     gesture = GestureModule()
+    print("[System Init] Initializing FaceLink Facial Recognition Databases...")
+    import sys as _sys
     facelink = FaceLink()
+    _sys.modules['__main__'].facelink = facelink
     model_gen = ModelGenModule()
 
     def reminder_checker():
