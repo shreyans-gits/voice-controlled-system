@@ -712,7 +712,7 @@ class NovaMobileApp(MDApp):
 
         while getattr(self, 'reverse_stream_active', False):
             current_index = self.camera_index
-            cap = cv2.VideoCapture(0)
+            cap = cv2.VideoCapture(current_index)
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
             cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
@@ -741,13 +741,11 @@ class NovaMobileApp(MDApp):
     def start_reverse_camera_pipeline(self):
         def async_init():
             try:
-                httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/start_reverse_stream", timeout=3.0)
-                
-                import threading
-                threading.Thread(target=self.stream_phone_camera_to_laptop, daemon=True).start()
+                httpx.post(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/start_reverse_stream", timeout=3.0)                
+                threading.Thread(target=self.stream_phone_camera_to_laptop, daemon=True).start()                
+                threading.Thread(target=self.poll_face_results, daemon=True).start()
             except Exception as e:
                 print(f"[Reverse Stream Error] Initial setup failed: {e}")
-                
         threading.Thread(target=async_init, daemon=True).start()
 
     def sync_laptop_mic_state(self, mute):
@@ -776,6 +774,37 @@ class NovaMobileApp(MDApp):
             lens_name = "FRONT LENS" if self.camera_index == 1 else "REAR LENS"
             print(f"[Hardware Sync] Toggling phone video loop to: {lens_name}")
             self.dashboard.add_bubble_to_ui(f"Switching to {lens_name}...", is_user=False)
+
+    def poll_face_results(self):
+        import time
+        print("[Telemetry Sync] 🟢 Mobile face-results reader active and polling...")
+        
+        last_announced_names = set()
+        
+        while getattr(self, 'reverse_stream_active', False):
+            try:
+                resp = httpx.get(
+                    f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/last_face_result",
+                    timeout=2.0
+                )
+                if resp.status_code == 200:
+                    names = resp.json().get("names", [])
+                    if names:
+                        current_names_set = set(names)
+                        if current_names_set != last_announced_names:
+                            msg = f"I can see: {', '.join(names)}"
+                            Clock.schedule_once(
+                                lambda dt, m=msg: self.dashboard.add_bubble_to_ui(m, is_user=False), 0
+                            )
+                            self.speak_response(msg)
+                            last_announced_names = current_names_set
+                    else:
+                        last_announced_names.clear()
+            except Exception as poll_err:
+                print(f"[Telemetry Drop] Polling sync skipped: {poll_err}")
+                
+            time.sleep(3.0)
+        print("[Telemetry Sync] 🛑 Mobile face-results reader deactivated cleanly.")
 
 if __name__ == "__main__":
     NovaMobileApp().run()
