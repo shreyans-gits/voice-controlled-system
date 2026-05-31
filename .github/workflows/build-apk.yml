@@ -38,11 +38,10 @@ jobs:
           pip install Cython==0.29.36
           pip install buildozer==1.5.0
           pip install virtualenv
-          # Install p4a from develop branch EXPLICITLY before buildozer
-          # This ensures the aab subcommand exists before buildozer invokes it
-          pip install git+https://github.com/kivy/python-for-android.git@develop
+          # Pin p4a to last known-good commit before Python 3.14 was introduced
+          pip install git+https://github.com/kivy/python-for-android.git@7df5ac3
 
-      - name: Pre-Install and Accept Android SDK Licenses
+      - name: Accept Android SDK Licenses
         run: |
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
