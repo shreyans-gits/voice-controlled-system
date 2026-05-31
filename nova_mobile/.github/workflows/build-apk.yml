@@ -1,0 +1,51 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Cloud Repository Branch
+        uses: actions/checkout@v4
+
+      - name: Set up System JDK Environment
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install System Compilation Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libssl-dev cmake libffi-dev libltdl-dev
+
+      - name: Set up Python Runtime Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Buildozer Tooling Core
+        run: |
+          pip install --upgrade pip
+          pip install Cython==0.29.36 buildozer virtualenv
+
+      - name: Clear Pre-existing Caches
+        run: rm -rf .buildozer/
+
+      - name: Execute Buildozer APK Production Compile
+        run: |
+          # Moves into the app folder if your workflow runs from a multi-project repository root.
+          # Change '.' to your actual subfolder directory path if main.py sits deeper!
+          cd . 
+          buildozer -v android debug
+
+      - name: Export Distributable APK Binary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOVA-Mobile-Link-APK
+          path: bin/*.apk
