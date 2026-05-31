@@ -42,7 +42,8 @@ jobs:
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
           
-          yes | tts-engine-placeholder 2>/dev/null || true
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses || true
           
           cd nova_mobile
           buildozer -v android debug --auto-accept-licenses
