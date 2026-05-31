@@ -29,6 +29,7 @@ android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = True
 android.accept_sdk_license = True
 p4a.branch = stable
+android.release_artifact = apk
 
 [buildozer]
 log_level = 2
