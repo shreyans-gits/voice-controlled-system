@@ -50,15 +50,10 @@ jobs:
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.1" "platforms;android-33"
 
       - name: Build APK
-        env:
-          # Bind to pre-licensed runner SDK paths directly
-          ANDROID_SDK_PATH: /usr/local/lib/android/sdk
-          ANDROID_NDK_PATH: /usr/local/lib/android/sdk/ndk-bundle
         run: |
           cd nova_mobile
-          # Force buildozer to use pre-licensed paths and explicitly override prompt defaults
-          buildozer android debug --sdk_path=$ANDROID_SDK_PATH --ndk_path=$ANDROID_NDK_PATH --auto-accept-licenses
-
+          buildozer -v android debug
+          
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
