@@ -39,8 +39,13 @@ jobs:
 
       - name: Execute Buildozer APK Production Compile
         run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          
+          yes | tts-engine-placeholder 2>/dev/null || true
+          
           cd nova_mobile
-          buildozer -v android debug
+          buildozer -v android debug --auto-accept-licenses
 
       - name: Export Distributable APK Binary Artifact
         uses: actions/upload-artifact@v4
