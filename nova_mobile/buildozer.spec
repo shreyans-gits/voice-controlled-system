@@ -10,7 +10,7 @@ source.include_exts = py,png,jpg,kv,txt,json,ini
 
 version = 1.0.0
 
-requirements = python3,kivy==2.2.1,kivymd==1.2.0,httpx,certifi,idna,sniffio,anyio,python-dotenv,numpy,pillow,requests,plyer
+requirements = python3,kivy==2.2.1,kivymd==1.2.0,httpx,certifi,idna,sniffio,anyio,python-dotenv,numpy,pillow,requests,plyer,httpcore
 
 orientation = portrait
 fullscreen = 1
@@ -24,6 +24,7 @@ android.ndk_api = 24
 android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = True
 android.accept_sdk_license = True
+android.manifest.application.usesCleartextTraffic = true
 
 p4a.branch = v2024.01.21
 # DO NOT add p4a.commit — the tag is enough
