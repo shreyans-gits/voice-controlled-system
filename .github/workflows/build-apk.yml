@@ -48,12 +48,17 @@ jobs:
           
           # Force install build-tools and platforms matching target requirements
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.1" "platforms;android-33"
+      
+      - name: Clean Buildozer Cache
+        run: |
+          rm -rf ~/.buildozer
+          rm -rf nova_mobile/.buildozer
 
       - name: Build APK
         run: |
           cd nova_mobile
           buildozer -v android debug
-          
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
