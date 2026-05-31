@@ -34,19 +34,25 @@ jobs:
           pip install --upgrade pip
           pip install Cython==0.29.36 buildozer virtualenv
 
-      - name: Clear Pre-existing Caches
-        run: rm -rf .buildozer/
-
-      - name: Execute Buildozer APK Production Compile
+      - name: Pre-Install and Accept Android SDK Licenses
         run: |
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
-          
+          # Accept licenses on the runner's pre-installed SDK
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses || true
           
+          # Force install build-tools 33.0.1 (the stable target API matching Buildozer's default Android API 33 setup)
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.1" "platforms;android-33"
+
+      - name: Execute Buildozer APK Production Compile
+        env:
+          # Tell buildozer to bypass its own download loop and use the pre-licensed system SDK
+          ANDROID_SDK_PATH: /usr/local/lib/android/sdk
+          ANDROID_NDK_PATH: /usr/local/lib/android/sdk/ndk-bundle
+        run: |
           cd nova_mobile
-          buildozer -v android debug --auto-accept-licenses
+          # 🌟 FIX: Force buildozer to read the environment paths and auto-accept license terms explicitly
+          buildozer android debug --sdk_path=$ANDROID_SDK_PATH --ndk_path=$ANDROID_NDK_PATH --auto-accept-licenses
 
       - name: Export Distributable APK Binary Artifact
         uses: actions/upload-artifact@v4
