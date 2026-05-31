@@ -39,13 +39,11 @@ jobs:
 
       - name: Execute Buildozer APK Production Compile
         run: |
-          # Moves into the app folder if your workflow runs from a multi-project repository root.
-          # Change '.' to your actual subfolder directory path if main.py sits deeper!
-          cd . 
+          cd nova_mobile
           buildozer -v android debug
 
       - name: Export Distributable APK Binary Artifact
         uses: actions/upload-artifact@v4
         with:
           name: NOVA-Mobile-Link-APK
-          path: bin/*.apk
+          path: nova_mobile/bin/*.apk
