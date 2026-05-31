@@ -4,7 +4,6 @@ import wave
 import threading
 import httpx
 import numpy as np
-import pyaudio
 import io
 from PIL import Image as PILImage
 
@@ -24,8 +23,12 @@ from kivy.uix.scrollview import ScrollView
 from kivymd.uix.card import MDCard
 from kivy.uix.image import Image
 from kivy.graphics.texture import Texture
+from kivy.utils import platform
 
 from mobile_config import API_URL, LAPTOP_TAILSCALE_IP
+
+if platform != 'android':
+    import pyaudio
 
 class LiveMJPEGViewer(Image):
     def __init__(self, **kwargs):
@@ -138,7 +141,7 @@ class DashboardScreen(Screen):
         )
 
         layout.add_widget(MDTopAppBar(
-            title="N.O.V.A.",
+            title="N.O.V.A. Desktop Link",
             anchor_title="center",
             elevation=4,
             md_bg_color=(0.08, 0.08, 0.12, 1),
@@ -542,7 +545,12 @@ class NovaMobileApp(MDApp):
 
         self.is_muted = True
         self._audio_thread_running = False
-        self.pyaudio_instance = pyaudio.PyAudio()
+        
+        if platform != 'android':
+            self.pyaudio_instance = pyaudio.PyAudio()
+        else:
+            self.pyaudio_instance = None
+            
         self.camera_index = 0
     
         self.sm = ScreenManager()
@@ -562,7 +570,80 @@ class NovaMobileApp(MDApp):
         if self._audio_thread_running:
             return
         self._audio_thread_running = True
-        threading.Thread(target=self.continuous_audio_processor, daemon=True).start()
+        
+        if platform == 'android':
+            threading.Thread(target=self.android_audio_processor, daemon=True).start()
+        else:
+            threading.Thread(target=self.continuous_audio_processor, daemon=True).start()
+
+    def android_audio_processor(self):
+        if self.is_muted:
+            self._audio_thread_running = False
+            return
+
+        try:
+            from android.storage import app_storage_path
+            from jnius import autoclass
+            
+            MediaRecorder = autoclass('android.media.MediaRecorder')
+            AudioSource = autoclass('android.media.MediaRecorder$AudioSource')
+            OutputFormat = autoclass('android.media.MediaRecorder$OutputFormat')
+            AudioEncoder = autoclass('android.media.MediaRecorder$AudioEncoder')
+            
+            storage_dir = app_storage_path()
+        except ModuleNotFoundError:
+            print("[Simulator Notice] Android hardware hooks bypassed on desktop.")
+            storage_dir = os.getcwd()
+            
+            class DummyRecorder:
+                def setAudioSource(self, *args): pass
+                def setOutputFormat(self, *args): pass
+                def setAudioEncoder(self, *args): pass
+                def setOutputFile(self, *args): pass
+                def prepare(self): pass
+                def start(self): pass
+                def stop(self): pass
+                def reset(self): pass
+                def release(self): pass
+            MediaRecorder = DummyRecorder
+
+        unique_id = int(time.time())
+        cache_path = os.path.join(storage_dir, f"mobile_input_{unique_id}.3gp")
+
+        recorder = MediaRecorder()
+        recorder.setAudioSource(1)
+        recorder.setOutputFormat(1)
+        recorder.setAudioEncoder(1)
+        recorder.setOutputFile(cache_path)
+        
+        print("[Audio Engine] 🟢 Android native hardware channel initialized. Recording...")
+        
+        try:
+            recorder.prepare()
+            recorder.start()
+        except Exception as e:
+            print(f"[Android Hardware Audio Crash] Failed to hook mic sensor: {e}")
+            self._audio_thread_running = False
+            return
+
+        recording_start = time.time()
+        while not self.is_muted and (time.time() - recording_start < 4.0):
+            time.sleep(0.2)
+
+        try:
+            recorder.stop()
+            recorder.reset()
+            recorder.release()
+        except Exception as e:
+            print(f"[Audio Hardware Teardown Notice] {e}")
+
+        if not self.is_muted and os.path.exists(cache_path):
+            Clock.schedule_once(lambda dt: setattr(self.dashboard.status_lbl, 'text', "TRANSMITTING..."), 0)
+            self._audio_thread_running = False
+            self.transmit_android_audio_payload(cache_path)
+        else:
+            self._audio_thread_running = False
+            Clock.schedule_once(lambda dt: self.reset_dashboard_state(), 0)
 
     def continuous_audio_processor(self):
         FORMAT = pyaudio.paInt16
@@ -637,6 +718,40 @@ class NovaMobileApp(MDApp):
             self._audio_thread_running = False
             Clock.schedule_once(lambda dt: self.reset_dashboard_state(), 0)
 
+    def transmit_android_audio_payload(self, file_path):
+        def async_post():
+            try:
+                url = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/process_audio"
+                with open(file_path, "rb") as audio_file:
+                    files = {"file": ("input.3gp", audio_file, "audio/3gpp")}
+                    response = httpx.post(url, files=files, timeout=45.0)
+
+                if response.status_code == 200:
+                    res_data = response.json()
+                    user_speech = res_data.get('query', '')
+                    nova_reply = res_data.get('text', '')
+
+                    if user_speech:
+                        Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(user_speech, is_user=True), 0)
+                    if nova_reply:
+                        Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(nova_reply, is_user=False), 0)
+                        self.speak_response(nova_reply)
+                else:
+                    err = f"Server error: HTTP {response.status_code}"
+                    Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(err, is_user=False), 0)
+            except Exception as e:
+                err = f"Network error: {e}"
+                Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(err, is_user=False), 0)
+            finally:
+                try:
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                except:
+                    pass
+                Clock.schedule_once(lambda dt: self.reset_dashboard_state(), 1.0)
+
+        threading.Thread(target=async_post, daemon=True).start()
+
     def transmit_audio_payload(self, file_path):
         def async_post():
             try:
@@ -682,7 +797,6 @@ class NovaMobileApp(MDApp):
     def speak_response(self, text):
         def do_speak():
             try:
-                from kivy import platform
                 if platform == 'android':
                     from plyer import tts
                     tts.speak(text)
