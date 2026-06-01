@@ -9,15 +9,12 @@ class Brain:
 
         # This is NOVA's personality
         self.system_prompt = f"""
-        You are {config.ASSISTANT_NAME}, a smart, helpful, and witty AI desktop assistant.
+        You are {config.ASSISTANT_NAME}, a smart, and witty AI desktop assistant.
         You are talking to {config.USER_NAME}.
-        Keep responses concise and conversational — you are being spoken aloud.
+        Keep responses short(one to two lines unless you need to have a bigger response) and conversational — you are being spoken aloud.
         No bullet points or markdown. Just natural sentences.
         {f"Known facts about the user from past sessions: {system_prompt_addition}" if system_prompt_addition else ""}
         """
-
-        # memory_data = Memory().load()
-        # self.system_prompt = f"You are NOVA, a helpful AI assistant. Known facts about user: {memory_data}"
 
     def get_intent(self,query):
         try:
@@ -63,7 +60,7 @@ class Brain:
             Valid Intent List:
             WEATHER, BATTERY, CPU, RAM, SEARCH, WATCH, WIKIPEDIA, NEWS, REMINDER, 
             WHATSAPP, SPOTIFY_PLAY, SPOTIFY_PAUSE, SPOTIFY_SKIP, POMODORO, 
-            SUMMARIZE, FLASHCARD, CONVERSATION, SCREEN_READ, SCREEN_EXPLAIN, SCREEN_SUMMARIZE, APP_OPEN, 
+            SUMMARIZE, FLASHCARD, CONVERSATION, SCREEN_READ, SCREEN_EXPLAIN, ANSWER_QUESTION_ON_SCREEN, SCREEN_SUMMARIZE, APP_OPEN, 
             CLIPBOARD_EXPLAIN, CLIPBOARD_TRANSLATE, CLIPBOARD_GET, VOLUME_UP, VOLUME_DOWN, BRIGHTNESS_SET,
             NOTE_ADD, NOTE_READ, NOTE_CLEAR, SETTINGS, WHITEBOARD, VOXEL_EDITOR, VIEW_MODEL, GENERATE_MODEL, DETECT_FACE
 
@@ -189,13 +186,11 @@ class Brain:
             return None
 
     def ask(self, user_input):
-        # Add user message to history
         self.conversation_history.append({
             "role": "user",
             "content": user_input
         })
 
-        # Send to Groq
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
@@ -204,10 +199,8 @@ class Brain:
             ]
         )
 
-        # Extract reply
         reply = response.choices[0].message.content
 
-        # Add reply to history so NOVA remembers context
         self.conversation_history.append({
             "role": "assistant",
             "content": reply

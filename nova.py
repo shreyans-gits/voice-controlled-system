@@ -310,7 +310,12 @@ def handle_vision_readers(intent_name, screen, message_queue, voice):
     if intent_name == "SCREEN_READ":
         prompt = "Describe everything on this screen"
     elif intent_name == "SCREEN_EXPLAIN":
-        prompt = "Explain what is happening on this screen in detail"
+        prompt = """Identify and describe only the primary, central piece of content or active application window 
+             visible on this screen. Ignore all system UI elements, taskbars, status bars, battery percentages, 
+             and window borders. Provide a concise summary of just the main focus."""
+    elif intent_name == "ANSWER_QUESTION_ON_SCREEN":
+        prompt = """Answer the question on my screen. If it is a multiple choice question then reply with ONLY the the 
+        correct option, else if it is a theory question, then reply with a two line answer."""
     else:
         prompt = "Summarize the main content on this screen"
     result = screen.read(prompt)
@@ -522,6 +527,8 @@ def main(dashboard, message_queue, input_queue):
                 "SCREEN_READ": lambda item, q, ctx: handle_vision_readers("SCREEN_READ", screen, message_queue, voice),
                 "SCREEN_EXPLAIN": lambda item, q, ctx: handle_vision_readers("SCREEN_EXPLAIN", screen, message_queue, voice),
                 "SCREEN_SUMMARIZE": lambda item, q, ctx: handle_vision_readers("SCREEN_SUMMARIZE", screen, message_queue, voice),
+                "ANSWER_QUESTION_ON_SCREEN": lambda item, q, ctx: handle_vision_readers("ANSWER_QUESTION_ON_SCREEN", screen, message_queue, voice),
+                
 
                 "CLIPBOARD_EXPLAIN": lambda item, q, ctx: handle_clipboard_skills("CLIPBOARD_EXPLAIN", clipboard, brain, message_queue, voice, ctx),
                 "CLIPBOARD_TRANSLATE": lambda item, q, ctx: handle_clipboard_skills("CLIPBOARD_TRANSLATE", clipboard, brain, message_queue, voice, ctx),
