@@ -297,6 +297,17 @@ class SettingsScreen(Screen):
         form_layout = MDBoxLayout(orientation="vertical", spacing=dp(18), padding=dp(20), size_hint_y=None)
         form_layout.bind(minimum_height=form_layout.setter('height'))
 
+        form_layout.add_widget(MDLabel(text="— Workstation Network Link —", font_style="Subtitle2", theme_text_color="Custom", text_color=(0, 0.8, 1, 1), halign="center"))
+        ip_entry_box = MDBoxLayout(orientation="horizontal", spacing=dp(10), size_hint_y=None, height=dp(50))
+        self.ip_input = MDTextField(
+            hint_text="Workstation Tailscale IP (e.g., 100.x.x.x)", 
+            text=self.app.laptop_ip,
+            size_hint_x=0.7
+        )
+        self.ip_input.bind(text=self.update_live_target_ip)
+        ip_entry_box.add_widget(self.ip_input)
+        form_layout.add_widget(ip_entry_box)
+
         form_layout.add_widget(MDLabel(text="— Memory Core —", font_style="Subtitle2", theme_text_color="Custom", text_color=(0, 0.8, 1, 1), halign="center"))
         self.memory_box = MDTextField(text="Syncing core metadata...", multiline=True, size_hint_y=None, height=dp(100), readonly=True)
         form_layout.add_widget(self.memory_box)
@@ -333,16 +344,30 @@ class SettingsScreen(Screen):
         
         self.on_enter = self.fetch_live_settings
 
+    def update_live_target_ip(self, instance, text):
+        self.app.laptop_ip = text.strip()
+
     def fetch_live_settings(self):
         def run_fetch():
+            if not self.app.laptop_ip:
+                return
             try:
-                response = httpx.get(f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/settings", timeout=5.0)
+                response = httpx.get(f"http://{self.app.laptop_ip}:8000/api/mobile/settings", timeout=5.0)
                 if response.status_code == 200:
                     data = response.json()
                     Clock.schedule_once(lambda dt: self.update_ui_elements(data), 0)
             except Exception as e:
                 print(f"[Fetch Error] Matrix sync failed: {e}")
         threading.Thread(target=run_fetch, daemon=True).start()
+
+    def push_settings_update(self, payload):
+        def run_push():
+            if not self.app.laptop_ip: return
+            try:
+                httpx.post(f"http://{self.app.laptop_ip}:8000/api/mobile/update_settings", json=payload, timeout=5.0)
+            except Exception as e:
+                print(f"[Push Error] Server write failed: {e}")
+        threading.Thread(target=run_push, daemon=True).start()
 
     def update_ui_elements(self, data):
         self.memory_box.text = data.get("memory_summary", "No summary logs available.")
@@ -427,7 +452,7 @@ class WebcamScreen(Screen):
         super().__init__(**kwargs)
         self.app = app_instance
 
-        layout = MDBoxLayout(orientation="vertical", md_bg_color=(0.05, 0.05, 0.08, 1))
+        layout = MDBoxLayout(orientation="vertical", md_bg_color=(0.02, 0.02, 0.04, 1))
         
         layout.add_widget(MDTopAppBar(
             title="Workspace Video Link",
@@ -438,13 +463,15 @@ class WebcamScreen(Screen):
 
         self.display_box = MDBoxLayout(
             orientation="vertical", 
-            padding=dp(10), 
+            padding=0, 
             md_bg_color=(0.02, 0.02, 0.04, 1)
         )
         
         self.stream_viewer = LiveMJPEGViewer(
             source="logo.png",
-            size_hint=(1, 1)
+            size_hint=(1, 1),
+            allow_stretch=True,
+            keep_ratio=False
         )
         self.display_box.add_widget(self.stream_viewer)
         layout.add_widget(self.display_box)
@@ -545,6 +572,8 @@ class NovaMobileApp(MDApp):
 
         self.is_muted = True
         self._audio_thread_running = False
+
+        self.laptop_ip = "100.71.247.61"
         
         if platform != 'android':
             self.pyaudio_instance = pyaudio.PyAudio()
@@ -757,7 +786,13 @@ class NovaMobileApp(MDApp):
                         Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(user_speech, is_user=True), 0)
                     if nova_reply:
                         Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(nova_reply, is_user=False), 0)
-                        self.speak_response(nova_reply)
+                        silent_phrases = ["could not decipher", "error", "failed to process", "try again"]
+                        should_speak = not any(phrase in nova_reply.lower() for phrase in silent_phrases)
+                        
+                        if should_speak:
+                            self.speak_response(nova_reply)
+                        else:
+                            print(f"[TTS Guard] Silenced vocalization for noise error: {nova_reply}")
                 else:
                     err = f"Server error: HTTP {response.status_code}"
                     Clock.schedule_once(lambda dt: self.dashboard.add_bubble_to_ui(err, is_user=False), 0)
@@ -795,7 +830,13 @@ class NovaMobileApp(MDApp):
                         Clock.schedule_once(
                             lambda dt: self.dashboard.add_bubble_to_ui(nova_reply, is_user=False), 0
                         )
-                        self.speak_response(nova_reply)
+                        silent_phrases = ["could not decipher", "error", "failed to process", "try again"]
+                        should_speak = not any(phrase in nova_reply.lower() for phrase in silent_phrases)
+                        
+                        if should_speak:
+                            self.speak_response(nova_reply)
+                        else:
+                            print(f"[TTS Guard] Silenced vocalization for noise error: {nova_reply}")
                 else:
                     err = f"Server error: HTTP {response.status_code}"
                     Clock.schedule_once(
