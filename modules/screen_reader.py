@@ -14,7 +14,11 @@ class ScreenReaderModule:
         screenshot.save(file_path)
         return file_path
 
-    def read(self,prompt = "What is on my screen"):
+    def read(self,
+             prompt = """Identify and describe only the primary, central piece of content or active application window 
+             visible on this screen. Ignore all system UI elements, taskbars, status bars, battery percentages, 
+             and window borders. Provide a concise summary of just the main focus."""
+             ):
         path = self._capture()
         with Image.open(path) as img:
             response = self.model.generate_content([prompt, img])
