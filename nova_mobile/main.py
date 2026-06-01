@@ -550,6 +550,7 @@ class NovaMobileApp(MDApp):
             self.pyaudio_instance = pyaudio.PyAudio()
         else:
             self.pyaudio_instance = None
+            self.check_and_request_android_permissions()
             
         self.camera_index = 0
     
@@ -562,6 +563,27 @@ class NovaMobileApp(MDApp):
         self.sm.add_widget(self.settings_screen)
         self.sm.add_widget(self.webcam_screen)
         return self.sm
+    
+    def check_and_request_android_permissions(self):
+        try:
+            from android.permissions import request_permissions, check_permission, Permission            
+            required_permissions = [
+                Permission.RECORD_AUDIO,
+                Permission.CAMERA
+            ]
+            
+            permissions_to_request = [
+                perm for perm in required_permissions if not check_permission(perm)
+            ]
+            
+            if permissions_to_request:
+                print(f"[Permissions Core] Missing rights detected. Prompting: {permissions_to_request}")
+                request_permissions(permissions_to_request)
+            else:
+                print("[Permissions Core] 🟢 All hardware permissions verified and active.")
+                
+        except Exception as perm_err:
+            print(f"[Permissions Guard Failure] Failed to invoke native request layer: {perm_err}")
 
     def switch_screen(self, name):
         self.sm.current = name
@@ -828,48 +850,82 @@ class NovaMobileApp(MDApp):
             from kivy.uix.camera import Camera
             from kivy.clock import Clock
             import io
+            from kivy.core.window import Window
 
-            cam = Camera(index=self.camera_index, resolution=(640, 480), play=True)
+            cam_holder = [None]
+            
+            def init_android_cam(dt):
+                try:
+                    android_cam = Camera(index=self.camera_index, resolution=(640, 480), play=True)
+                    android_cam.size_hint = (None, None)
+                    android_cam.size = (1, 1)
+                    android_cam.opacity = 0
+                    
+                    Window.add_widget(android_cam)
+                    cam_holder[0] = android_cam
+                    print("[Hardware Sync] Native Android camera initialized and hidden.")
+                except Exception as cam_err:
+                    print(f"[Android Hardware Error] Initialization aborted: {cam_err}")
+
+            Clock.schedule_once(init_android_cam, 0)
+            
             time.sleep(2.0)
+            cam = cam_holder[0]
 
             while getattr(self, 'reverse_stream_active', False):
-                try:
-                    texture = cam.texture
-                    if texture:
+                if cam and cam.texture:
+                    try:
+                        texture = cam.texture
                         size = texture.size
                         pixels = texture.pixels
+                        
                         pil_img = PILImage.frombytes('RGBA', size, pixels)
                         pil_img = pil_img.convert('RGB')
+                        
                         buf = io.BytesIO()
                         pil_img.save(buf, format='JPEG', quality=65)
                         raw_bytes = buf.getvalue()
+                        
                         requests.post(url, data=raw_bytes, timeout=1.0)
-                except Exception as e:
-                    print(f"[Upload Drop] {e}")
+                    except Exception as e:
+                        print(f"[Upload Drop] {e}")
+                else:
+                    time.sleep(0.01)
+                    
                 time.sleep(0.04)
 
-            cam.play = False
+            if cam:
+                def destroy_android_cam(dt):
+                    try:
+                        cam.play = False
+                        Window.remove_widget(cam)
+                        print("[Hardware Sync] Native Android camera disconnected cleanly.")
+                    except:
+                        pass
+                Clock.schedule_once(destroy_android_cam, 0)
 
         else:
             import cv2
-            while getattr(self, 'reverse_stream_active', False):
-                current_index = self.camera_index
-                cap = cv2.VideoCapture(current_index)
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            current_index = self.camera_index
+            
+            cap = cv2.VideoCapture(current_index)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-                while getattr(self, 'reverse_stream_active', False) and self.camera_index == current_index:
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
-                    try:
-                        frame = cv2.flip(frame, 1)
-                        _, encoded_img = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
-                        requests.post(url, data=encoded_img.tobytes(), timeout=1.0)
-                    except Exception as e:
-                        print(f"[Upload Drop] {e}")
-                    time.sleep(0.04)
-                cap.release()
+            while getattr(self, 'reverse_stream_active', False) and self.camera_index == current_index:
+                ret, frame = cap.read()
+                if not ret or frame is None:
+                    time.sleep(0.01)
+                    continue
+                try:
+                    frame = cv2.flip(frame, 1)
+                    _, encoded_img = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
+                    requests.post(url, data=encoded_img.tobytes(), timeout=1.0)
+                except Exception as e:
+                    print(f"[Upload Drop] {e}")
+                time.sleep(0.04)
+                
+            cap.release()
 
         print("[Reverse Stream] 🛑 Phone camera deactivated cleanly.")
 
