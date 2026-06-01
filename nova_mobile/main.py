@@ -817,38 +817,59 @@ class NovaMobileApp(MDApp):
             self.start_listening_loop()
 
     def stream_phone_camera_to_laptop(self):
-        import cv2
         import requests
         import time
+        from kivy.graphics.texture import Texture
 
         url = f"http://{LAPTOP_TAILSCALE_IP}:8000/api/mobile/upload_frame"
         print("[Reverse Stream] 🎥 Phone camera streaming loop active...")
 
-        while getattr(self, 'reverse_stream_active', False):
-            current_index = self.camera_index
-            cap = cv2.VideoCapture(current_index)
-            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        if platform == 'android':
+            from kivy.uix.camera import Camera
+            from kivy.clock import Clock
+            import io
 
-            while getattr(self, 'reverse_stream_active', False) and self.camera_index == current_index:
-                ret, frame = cap.read()
-                if not ret:
-                    break
+            cam = Camera(index=self.camera_index, resolution=(640, 480), play=True)
+            time.sleep(2.0)
 
+            while getattr(self, 'reverse_stream_active', False):
                 try:
-                    if current_index == 1:
-                        frame = cv2.flip(frame, 1)
-                    else:
-                        frame = cv2.flip(frame, 1)
-
-                    _, encoded_img = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
-                    raw_bytes = encoded_img.tobytes()
-                    requests.post(url, data=raw_bytes, timeout=1.0)
-
+                    texture = cam.texture
+                    if texture:
+                        size = texture.size
+                        pixels = texture.pixels
+                        pil_img = PILImage.frombytes('RGBA', size, pixels)
+                        pil_img = pil_img.convert('RGB')
+                        buf = io.BytesIO()
+                        pil_img.save(buf, format='JPEG', quality=65)
+                        raw_bytes = buf.getvalue()
+                        requests.post(url, data=raw_bytes, timeout=1.0)
                 except Exception as e:
-                    print(f"[Upload Drop] Network frame sync missed: {e}")
+                    print(f"[Upload Drop] {e}")
                 time.sleep(0.04)
-            cap.release()
+
+            cam.play = False
+
+        else:
+            import cv2
+            while getattr(self, 'reverse_stream_active', False):
+                current_index = self.camera_index
+                cap = cv2.VideoCapture(current_index)
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+                while getattr(self, 'reverse_stream_active', False) and self.camera_index == current_index:
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+                    try:
+                        frame = cv2.flip(frame, 1)
+                        _, encoded_img = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
+                        requests.post(url, data=encoded_img.tobytes(), timeout=1.0)
+                    except Exception as e:
+                        print(f"[Upload Drop] {e}")
+                    time.sleep(0.04)
+                cap.release()
 
         print("[Reverse Stream] 🛑 Phone camera deactivated cleanly.")
 

@@ -143,21 +143,33 @@ async def process_mobile_audio(file: UploadFile = File(...), background_tasks: B
         os.makedirs(os.path.dirname(temp_audio_path), exist_ok=True)
         with open(temp_audio_path, "wb") as f:
             f.write(await file.read())
-            
+
+        # Convert 3gp/m4a to WAV for speech_recognition compatibility
+        if not temp_audio_path.endswith(".wav"):
+            import subprocess
+            wav_path = temp_audio_path.rsplit(".", 1)[0] + ".wav"
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", temp_audio_path, wav_path],
+                check=True, capture_output=True
+            )
+            os.remove(temp_audio_path)
+        else:
+            wav_path = temp_audio_path
+
         import speech_recognition as sr
         import config
         from core.voice import Voice
-        
+
         voice_engine = Voice()
         transcribed_query = ""
 
-        if os.path.exists(temp_audio_path):
-            with sr.AudioFile(temp_audio_path) as source:
+        if os.path.exists(wav_path):
+            with sr.AudioFile(wav_path) as source:
                 print("[Server STT] Extracting audio data from mobile payload cache...")
                 audio_data = voice_engine.recognizer.record(source)
                 try:
                     transcribed_query = voice_engine.recognizer.recognize_google(
-                        audio_data, 
+                        audio_data,
                         language=config.TTS_LANGUAGE
                     ).lower()
                     print(f"[Server STT] Transcribed Mobile Input: '{transcribed_query}'")
@@ -166,24 +178,24 @@ async def process_mobile_audio(file: UploadFile = File(...), background_tasks: B
                 except sr.RequestError as e:
                     print(f"[Server STT] API service connection drop: {e}")
 
-        try: os.remove(temp_audio_path)
+        try: os.remove(wav_path)
         except: pass
-            
+
         if not transcribed_query or not transcribed_query.strip():
             return {"status": "error", "text": "Could not decipher speech inputs."}
-            
+
         import uuid
         request_id = str(uuid.uuid4())
         response_queue = queue.Queue()
         _response_slots[request_id] = response_queue
-        
+
         _input_queue.put({"text": transcribed_query, "origin": "network", "request_id": request_id})
-        
+
         import asyncio
         loop = asyncio.get_event_loop()
         final_response = await loop.run_in_executor(None, lambda: response_queue.get(timeout=45.0))
         return {"status": "success", "query": transcribed_query, "text": final_response}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Audio thread pipeline failure: {e}")
 
